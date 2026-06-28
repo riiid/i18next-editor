@@ -3,7 +3,7 @@
  *
  * - 사용자가 자기 구글 계정으로 OAuth 동의(spreadsheets 스코프) 후, 그 토큰으로 시트를 수정한다.
  * - upsert 규칙: key가 있으면 해당 언어 셀만 교체, 없으면 행 추가.
- *   A열·memo·다른 언어값·행 순서는 보존한다.
+ *   memo·다른 언어값·행 순서는 보존한다.
  *
  * 시트 레이아웃/계정은 호스트가 SheetsConfig로 주입한다(하드코딩 없음).
  */
@@ -14,11 +14,17 @@ import type {Overrides} from './overrides';
 const GIS_SRC = 'https://accounts.google.com/gsi/client';
 const SHEETS_SCOPE = 'https://www.googleapis.com/auth/spreadsheets';
 
-// B열 기준 0-based 컬럼 인덱스. 기본 레이아웃: B:key C:memo D:ko E:ja F:en.
-const KEY_COL = 0;
-// 시트의 데이터 영역(헤더 1행 제외, B열부터 F열까지).
-const READ_RANGE = 'B2:F';
-const WRITE_ANCHOR = 'B2';
+// 데이터 영역은 A열부터 시작하고(헤더 1행 제외), 끝 컬럼은 config(keyCol/langCol)에서 도출한다.
+const WRITE_ANCHOR = 'A2';
+
+/** 0-based 컬럼 인덱스를 A1 컬럼 문자로 변환한다(0→A, 25→Z, 26→AA). */
+function colLetter(idx: number): string {
+  let s = '';
+  for (let n = idx; n >= 0; n = Math.floor(n / 26) - 1) {
+    s = String.fromCharCode((n % 26) + 65) + s;
+  }
+  return s;
+}
 
 type TokenResponse = {access_token?: string; error?: string; error_description?: string};
 type TokenClient = {requestAccessToken: (overrides?: {prompt?: string}) => void};
@@ -78,22 +84,23 @@ export async function getAccessToken(clientId: string): Promise<string> {
   });
 }
 
-/** 시트명을 A1 표기로 안전하게 인용한다('Web(game)'!B2:F 처럼). */
+/** 시트명을 A1 표기로 안전하게 인용한다('Web(game)'!A2:F 처럼). */
 function a1(tab: string, range: string): string {
   const quoted = `'${tab.replace(/'/g, "''")}'!${range}`;
   return encodeURIComponent(quoted);
 }
 
-/** 시트의 데이터 영역(B2:F)을 2차원 문자열 배열로 읽는다. */
-export async function readData(token: string, spreadsheetId: string, tab: string): Promise<string[][]> {
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(spreadsheetId)}/values/${a1(tab, READ_RANGE)}?majorDimension=ROWS`;
+/** 시트의 데이터 영역(A2부터 cols개 컬럼)을 2차원 문자열 배열로 읽는다. */
+export async function readData(token: string, spreadsheetId: string, tab: string, cols: number): Promise<string[][]> {
+  const range = `A2:${colLetter(cols - 1)}`;
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(spreadsheetId)}/values/${a1(tab, range)}?majorDimension=ROWS`;
   const res = await fetch(url, {headers: {Authorization: `Bearer ${token}`}});
   if (!res.ok) throw new Error(`시트 읽기 실패 (${res.status}): ${await res.text()}`);
   const json = (await res.json()) as {values?: string[][]};
   return json.values ?? [];
 }
 
-/** values(2차원 배열)를 B2부터 한 번에 덮어쓴다(RAW). A열은 건드리지 않는다. */
+/** values(2차원 배열)를 A2부터 한 번에 덮어쓴다(RAW). */
 export async function writeData(token: string, spreadsheetId: string, tab: string, values: string[][]): Promise<void> {
   // 빈 문자열('')을 그대로 쓰면 셀에 빈 문자열이 "값"으로 기록되어 ISBLANK가 false가 된다.
   // null로 보내면 해당 셀을 건드리지 않아(skip) 원래의 빈 셀 상태가 유지된다.
@@ -117,9 +124,9 @@ export function providedLangs(overrides: Overrides, languages: Language[]): Lang
   });
 }
 
-/** langCol에서 행 길이(컬럼 수)를 도출한다(key 0열 + 최대 언어 컬럼). */
-function numCols(langCol: Record<Language, number>): number {
-  return Math.max(KEY_COL, ...Object.values(langCol)) + 1;
+/** keyCol/langCol에서 행 길이(컬럼 수)를 도출한다(최대 컬럼 인덱스 + 1). */
+export function numCols(keyCol: number, langCol: Record<Language, number>): number {
+  return Math.max(keyCol, ...Object.values(langCol)) + 1;
 }
 
 /**
@@ -130,6 +137,7 @@ export function computeUpsert(
   existing: string[][],
   overrides: Overrides,
   languages: Language[],
+  keyCol: number,
   langCol: Record<Language, number>
 ): {
   values: string[][];
@@ -137,7 +145,7 @@ export function computeUpsert(
   /** 변경된 key별 언어별 기존(as-is) 값. 변경 안 된 언어 셀을 미리보기에 회색으로 보여주기 위함. */
   currentByKey: Record<string, Record<Language, string>>;
 } {
-  const cols = numCols(langCol);
+  const cols = numCols(keyCol, langCol);
   // 각 행을 cols 길이로 패딩(Sheets는 trailing 빈 셀을 생략하므로).
   const values: string[][] = existing.map(row => {
     const r = row.slice(0, cols);
@@ -149,7 +157,7 @@ export function computeUpsert(
 
   const rowByKey: Record<string, number> = {};
   for (let i = 0; i < values.length; i++) {
-    const k = values[i][KEY_COL];
+    const k = values[i][keyCol];
     if (k) rowByKey[k] = i;
   }
 
@@ -168,7 +176,7 @@ export function computeUpsert(
         }
       } else {
         const newRow = new Array<string>(cols).fill('');
-        newRow[KEY_COL] = key;
+        newRow[keyCol] = key;
         newRow[colIdx] = toBe;
         rowByKey[key] = values.length;
         values.push(newRow);

@@ -42,6 +42,7 @@ export const WithSheets: Story = {
       clientId: 'demo.apps.googleusercontent.com',
       spreadsheetId: '1AbCdefGhIjkLmnOpQrStUvWxYz',
       tab: 'translations',
+      keyCol: 0,
       langCol: {ko: 2, en: 4},
     },
   },

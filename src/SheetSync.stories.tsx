@@ -35,6 +35,7 @@ export const Default: Story = {
       clientId: 'demo.apps.googleusercontent.com',
       spreadsheetId: '1AbCdefGhIjkLmnOpQrStUvWxYz',
       tab: 'translations',
+      keyCol: 0,
       langCol: {ko: 2, en: 4},
     },
     overrides: {ko: {greeting: '수정된 인사말'}},

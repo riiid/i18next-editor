@@ -33,7 +33,8 @@ import {I18nEditor} from 'i18next-editor';
     clientId: '...apps.googleusercontent.com',
     spreadsheetId: '...',
     tab: 'Sheet1',
-    langCol: {ko: 2, ja: 3, en: 4}, // B열(0-based) 기준 각 언어 컬럼
+    keyCol: 0, // A열(0-based) 기준 key 컬럼
+    langCol: {ko: 2, ja: 3, en: 4}, // A열(0-based) 기준 각 언어 컬럼 (A:key B:memo C:ko D:ja E:en)
   }}
 />
 ```

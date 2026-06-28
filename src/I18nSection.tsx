@@ -7,8 +7,10 @@
  * 3) 시트 반영(선택): override한 key만 OAuth로 구글 시트에 직접 upsert(반영 전 as-is→to-be 확인).
  */
 import {useCallback, useEffect, useRef, useState} from 'react';
-import {css} from '@emotion/react';
 import type {i18n as I18n} from 'i18next';
+import {Button} from './components/ui/button';
+import {Separator} from './components/ui/separator';
+import {Textarea} from './components/ui/textarea';
 import {keyForMarkedText, MARKER_START, setMarkerEnabled} from './marker';
 import {
   forceRerender,
@@ -171,68 +173,68 @@ export default function I18nSection({i18n, languages, fallbackLng, sheets}: Prop
   }, [i18n]);
 
   return (
-    <>
+    <div className="flex flex-col gap-2.5">
       {/* inspect 하이라이트 오버레이 */}
       {inspecting && hover && (
         <div
-          css={css`
-            position: fixed;
-            z-index: 2147483646;
-            pointer-events: none;
-            border: 2px solid #2f80ed;
-            background: rgba(47, 128, 237, 0.12);
-            border-radius: 3px;
-          `}
+          className="pointer-events-none fixed z-[2147483646] rounded-sm border-2 border-ring bg-ring/10"
           style={{top: hover.top, left: hover.left, width: hover.width, height: hover.height}}
         />
       )}
 
-      <button type="button" css={inspectBtnCss(inspecting)} onClick={() => setInspecting(v => !v)}>
+      <Button variant={inspecting ? 'default' : 'outline'} className="w-full" onClick={() => setInspecting(v => !v)}>
         {inspecting ? '● 번역키 picker 끄기' : '◎ 번역키 picker 켜기'}
-      </button>
+      </Button>
 
-      <div css={dividerCss} />
-      <div css={sectionTitleCss}>표시 언어</div>
-      <div css={rowCss}>
-        {languages.map(lng => (
-          <button key={lng} type="button" css={langBtnCss(lang === lng)} onClick={() => changeLang(lng)}>
-            {lng}
-          </button>
-        ))}
+      <Separator />
+      <div>
+        <div className="mb-1.5 text-[11px] text-muted-foreground">표시 언어</div>
+        <div className="flex flex-wrap gap-1.5">
+          {languages.map(lng => (
+            <Button
+              key={lng}
+              size="sm"
+              variant={lang === lng ? 'default' : 'outline'}
+              className="uppercase"
+              onClick={() => changeLang(lng)}>
+              {lng}
+            </Button>
+          ))}
+        </div>
       </div>
 
-      <div css={dividerCss} />
+      <Separator />
 
       {selectedKey ? (
-        <div>
-          <div css={keyLabelCss}>{selectedKey}</div>
+        <div className="flex flex-col gap-1.5">
+          <div className="break-all font-bold text-primary">{selectedKey}</div>
           {languages.map(lng => (
-            <label key={lng} css={fieldCss}>
-              <span>{lng}</span>
-              <textarea
+            <label key={lng} className="block">
+              <span className="mb-0.5 inline-block uppercase text-muted-foreground">{lng}</span>
+              <Textarea
                 value={draft[lng] ?? ''}
                 onChange={e => setDraft(d => ({...d, [lng]: e.target.value}))}
                 rows={2}
               />
             </label>
           ))}
-          <p css={hintCss}>변경한 값은 현재 브라우저에만 저장돼요.</p>
-          <div css={rowCss}>
-            <button type="button" css={primaryBtnCss} onClick={save}>
-              저장
-            </button>
-            <button type="button" css={ghostBtnCss} onClick={() => setSelectedKey(null)}>
+          <p className="m-0 leading-relaxed text-muted-foreground">변경한 값은 현재 브라우저에만 저장돼요.</p>
+          <div className="flex flex-wrap gap-1.5">
+            <Button onClick={save}>저장</Button>
+            <Button variant="outline" onClick={() => setSelectedKey(null)}>
               닫기
-            </button>
+            </Button>
           </div>
         </div>
       ) : (
-        <p css={hintCss}>번역키 picker를 켜고 화면의 번역 텍스트를 클릭하면 여기서 모든 언어를 수정할 수 있어요.</p>
+        <p className="m-0 leading-relaxed text-muted-foreground">
+          번역키 picker를 켜고 화면의 번역 텍스트를 클릭하면 여기서 모든 언어를 수정할 수 있어요.
+        </p>
       )}
 
       {sheets && (
         <>
-          <div css={dividerCss} />
+          <Separator />
           <SheetSync
             i18n={i18n}
             languages={languages}
@@ -244,101 +246,11 @@ export default function I18nSection({i18n, languages, fallbackLng, sheets}: Prop
         </>
       )}
 
-      <div css={dividerCss} />
-      <button type="button" css={dangerBtnCss} onClick={resetAll}>
+      <Separator />
+      <Button variant="destructive" className="w-full" onClick={resetAll}>
         저장된 override값 초기화
-      </button>
-      {status && <div css={statusCss}>{status}</div>}
-    </>
+      </Button>
+      {status && <div className="break-all text-primary">{status}</div>}
+    </div>
   );
 }
-
-const inspectBtnCss = (active: boolean) => css`
-  cursor: pointer;
-  border: 1px solid ${active ? '#2f80ed' : '#cfcfcf'};
-  background: ${active ? '#2f80ed' : '#fff'};
-  color: ${active ? '#fff' : '#444'};
-  border-radius: 5px;
-  padding: 5px 9px;
-`;
-const langBtnCss = (active: boolean) => css`
-  cursor: pointer;
-  border: 1px solid ${active ? '#2f80ed' : '#cfcfcf'};
-  background: ${active ? '#2f80ed' : '#fff'};
-  color: ${active ? '#fff' : '#444'};
-  border-radius: 5px;
-  padding: 5px 12px;
-  text-transform: uppercase;
-`;
-const sectionTitleCss = css`
-  color: #888;
-  margin-bottom: 6px;
-`;
-const keyLabelCss = css`
-  font-weight: 700;
-  word-break: break-all;
-  margin-bottom: 6px;
-  color: #2f80ed;
-`;
-const fieldCss = css`
-  display: block;
-  margin-bottom: 6px;
-  span {
-    display: inline-block;
-    width: 24px;
-    color: #888;
-    text-transform: uppercase;
-  }
-  textarea {
-    width: 100%;
-    box-sizing: border-box;
-    resize: vertical;
-    font: inherit;
-    border: 1px solid #d5d5d5;
-    border-radius: 4px;
-    padding: 4px 6px;
-  }
-`;
-const rowCss = css`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-`;
-const primaryBtnCss = css`
-  cursor: pointer;
-  border: none;
-  background: #2f80ed;
-  color: #fff;
-  border-radius: 5px;
-  padding: 6px 12px;
-`;
-const ghostBtnCss = css`
-  cursor: pointer;
-  border: 1px solid #cfcfcf;
-  background: #fff;
-  border-radius: 5px;
-  padding: 5px 9px;
-`;
-const dangerBtnCss = css`
-  cursor: pointer;
-  border: 1px solid #eab0b0;
-  background: #fff;
-  color: #c0392b;
-  border-radius: 5px;
-  padding: 5px 9px;
-`;
-const hintCss = css`
-  color: #777;
-  line-height: 1.5;
-  margin: 0;
-`;
-const dividerCss = css`
-  height: 1px;
-  background: #ececec;
-  margin: 10px 0;
-`;
-const statusCss = css`
-  margin-top: 8px;
-  color: #2f80ed;
-  word-break: break-all;
-`;

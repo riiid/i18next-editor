@@ -6,7 +6,6 @@
  * - pointer-events:none 이라 클릭을 가로채지 않는다.
  */
 import {useEffect, useState} from 'react';
-import {css} from '@emotion/react';
 import type {i18n as I18n} from 'i18next';
 import {hasAnyOverride, loadOverrides} from './overrides';
 
@@ -23,20 +22,9 @@ export default function OverrideBanner({i18n}: {i18n: I18n}) {
   }, [i18n]);
 
   if (!active) return null;
-  return <div css={bannerCss}>override된 번역키가 있어요</div>;
+  return (
+    <div className="pointer-events-none fixed inset-x-0 top-0 z-[99] bg-destructive py-1 text-center text-xs font-bold text-destructive-foreground opacity-30">
+      override된 번역키가 있어요
+    </div>
+  );
 }
-
-const bannerCss = css`
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 99;
-  pointer-events: none;
-  opacity: 0.3;
-  background: red;
-  color: #fff;
-  text-align: center;
-  font-weight: 700;
-  padding: 4px 0;
-`;

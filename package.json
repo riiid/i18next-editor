@@ -19,20 +19,20 @@
   ],
   "sideEffects": false,
   "scripts": {
-    "build": "tsdown src/index.tsx --format esm --dts --clean",
-    "dev": "tsdown src/index.tsx --format esm --dts --watch",
-    "typecheck": "tsc --noEmit",
+    "gen:css": "node scripts/gen-css.mjs",
+    "build": "pnpm gen:css && tsdown src/index.tsx --format esm --dts --clean",
+    "dev": "pnpm gen:css && tsdown src/index.tsx --format esm --dts --watch",
+    "typecheck": "pnpm gen:css && tsc --noEmit",
     "test": "vitest run"
   },
   "peerDependencies": {
-    "@emotion/react": ">=11",
     "i18next": ">=23",
     "react": ">=18",
     "react-dom": ">=18",
     "react-i18next": ">=14"
   },
   "devDependencies": {
-    "@emotion/react": "^11.14.0",
+    "@tailwindcss/cli": "^4.3.1",
     "@types/react": "^18.2.48",
     "@types/react-dom": "^18.2.18",
     "happy-dom": "^20.10.6",
@@ -40,8 +40,15 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-i18next": "^15.7.4",
+    "tailwindcss": "^4.3.1",
     "tsdown": "^0.22.3",
     "typescript": "^5.9.3",
     "vitest": "^2.1.9"
+  },
+  "dependencies": {
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.21.0",
+    "tailwind-merge": "^3.6.0"
   }
 }

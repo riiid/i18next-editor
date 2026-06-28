@@ -5,8 +5,9 @@
  * 시트 연동 설정(SheetsConfig)은 호스트가 주입할 때만 이 컴포넌트가 렌더된다.
  */
 import {useCallback, useState} from 'react';
-import {css} from '@emotion/react';
 import type {i18n as I18n} from 'i18next';
+import {Badge} from './components/ui/badge';
+import {Button} from './components/ui/button';
 import {getEffectiveValue, type Overrides, setOverrideValue} from './overrides';
 import type {Language, SheetsConfig} from './types';
 import {computeUpsert, type Diff, getAccessToken, providedLangs, readData, writeData} from './sheets';
@@ -115,58 +116,70 @@ export default function SheetSync({i18n, languages, sheets, overrides, setOverri
   }, [pending, sheets]);
 
   return (
-    <>
-      <p css={hintCss}>
+    <div className="flex flex-col gap-2">
+      <p className="m-0 leading-relaxed text-muted-foreground">
         지금까지 저장된 전체 변경사항을 확인하고 시트에 반영할 수 있어요. 개발자가 코드에 시트 내용을 반영해야 제품에
         최종 적용돼요.
       </p>
-      <div css={rowCss}>
-        <button type="button" css={primaryBtnCss} disabled={busy} onClick={previewPush}>
+      <div className="flex flex-wrap gap-1.5">
+        <Button disabled={busy} onClick={previewPush}>
           {busy ? '처리 중...' : '시트에 적용하기'}
-        </button>
-        <button type="button" css={ghostBtnCss} disabled={busy} onClick={pullFromSheet}>
+        </Button>
+        <Button variant="outline" disabled={busy} onClick={pullFromSheet}>
           {busy ? '처리 중...' : '시트에서 가져오기'}
-        </button>
+        </Button>
       </div>
-      {status && <div css={statusCss}>{status}</div>}
+      {status && <div className="break-all text-primary">{status}</div>}
 
       {/* as-is → to-be 미리보기 confirm 모달 */}
       {pending && (
-        <div css={modalBackdropCss}>
-          <div css={modalCss}>
-            <div css={modalTitleCss}>시트 반영 미리보기 · {pending.diffs.length}건</div>
-            <div css={modalScrollCss}>
-              <table css={diffTableCss}>
+        <div className="fixed inset-0 z-[2147483647] flex items-center justify-center bg-black/45 p-6">
+          <div className="flex max-h-[80vh] w-[min(720px,92vw)] flex-col overflow-hidden rounded-lg bg-card text-card-foreground shadow-2xl">
+            <div className="bg-primary px-4 py-3 font-bold text-primary-foreground">
+              시트 반영 미리보기 · {pending.diffs.length}건
+            </div>
+            <div className="overflow-auto px-4 py-2">
+              <table className="w-full border-collapse">
                 <thead>
                   <tr>
-                    <th>key</th>
+                    <th className="sticky top-0 border-b border-border bg-muted px-2 py-1.5 text-left font-medium text-muted-foreground">
+                      key
+                    </th>
                     {languages.map(lng => (
-                      <th key={lng}>{lng}</th>
+                      <th
+                        key={lng}
+                        className="sticky top-0 border-b border-border bg-muted px-2 py-1.5 text-left font-medium uppercase text-muted-foreground">
+                        {lng}
+                      </th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {groupDiffsByKey(pending.diffs).map(([key, langs]) => (
                     <tr key={key}>
-                      <td>
+                      <td className="border-b border-border px-2 py-1.5 align-top [word-break:break-word]">
                         {key}
-                        {languages.some(lng => langs[lng]?.isNew) && <span css={newBadgeCss}>신규</span>}
+                        {languages.some(lng => langs[lng]?.isNew) && (
+                          <Badge variant="outline" className="ml-1.5">
+                            신규
+                          </Badge>
+                        )}
                       </td>
                       {languages.map(lng => {
                         const d = langs[lng];
                         if (d) {
                           return (
-                            <td key={lng}>
-                              <div css={asIsCellCss}>{d.asIs || '—'}</div>
-                              <div css={toBeCellCss}>{d.toBe}</div>
+                            <td key={lng} className="border-b border-border px-2 py-1.5 align-top [word-break:break-word]">
+                              <div className="text-destructive line-through">{d.asIs || '—'}</div>
+                              <div className="font-semibold text-emerald-600">{d.toBe}</div>
                             </td>
                           );
                         }
                         // 변경 안 된 언어: 기존 값을 회색으로 표시(비어있으면 "(값 없음)").
                         const current = pending.currentByKey[key]?.[lng] ?? '';
                         return (
-                          <td key={lng}>
-                            <div css={unchangedCellCss}>{current || '(값 없음)'}</div>
+                          <td key={lng} className="border-b border-border px-2 py-1.5 align-top [word-break:break-word]">
+                            <div className="text-muted-foreground">{current || '(값 없음)'}</div>
                           </td>
                         );
                       })}
@@ -175,121 +188,17 @@ export default function SheetSync({i18n, languages, sheets, overrides, setOverri
                 </tbody>
               </table>
             </div>
-            <div css={modalActionsCss}>
-              <button type="button" css={primaryBtnCss} disabled={busy} onClick={confirmPush}>
+            <div className="flex gap-2 border-t border-border px-4 py-3">
+              <Button disabled={busy} onClick={confirmPush}>
                 {busy ? '반영 중...' : '확인하고 반영'}
-              </button>
-              <button type="button" css={ghostBtnCss} disabled={busy} onClick={() => setPending(null)}>
+              </Button>
+              <Button variant="outline" disabled={busy} onClick={() => setPending(null)}>
                 취소
-              </button>
+              </Button>
             </div>
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }
-
-const rowCss = css`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-`;
-const primaryBtnCss = css`
-  cursor: pointer;
-  border: none;
-  background: #2f80ed;
-  color: #fff;
-  border-radius: 5px;
-  padding: 6px 12px;
-`;
-const ghostBtnCss = css`
-  cursor: pointer;
-  border: 1px solid #cfcfcf;
-  background: #fff;
-  border-radius: 5px;
-  padding: 5px 9px;
-`;
-const hintCss = css`
-  color: #777;
-  line-height: 1.5;
-  margin: 0;
-`;
-const statusCss = css`
-  margin-top: 8px;
-  color: #2f80ed;
-  word-break: break-all;
-`;
-const modalBackdropCss = css`
-  position: fixed;
-  inset: 0;
-  z-index: 2147483647;
-  background: rgba(0, 0, 0, 0.45);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-`;
-const modalCss = css`
-  width: min(720px, 92vw);
-  max-height: 80vh;
-  display: flex;
-  flex-direction: column;
-  background: #fff;
-  border-radius: 10px;
-  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.35);
-  overflow: hidden;
-`;
-const modalTitleCss = css`
-  padding: 12px 16px;
-  font-weight: 700;
-  background: #2b2f36;
-  color: #fff;
-`;
-const modalScrollCss = css`
-  overflow: auto;
-  padding: 8px 16px;
-`;
-const diffTableCss = css`
-  width: 100%;
-  border-collapse: collapse;
-  th,
-  td {
-    text-align: left;
-    padding: 6px 8px;
-    border-bottom: 1px solid #eee;
-    vertical-align: top;
-    word-break: break-word;
-  }
-  th {
-    position: sticky;
-    top: 0;
-    background: #f6f7f9;
-    color: #666;
-  }
-`;
-const asIsCellCss = css`
-  color: #c0392b;
-  text-decoration: line-through;
-`;
-const toBeCellCss = css`
-  color: #188038;
-  font-weight: 600;
-`;
-const unchangedCellCss = css`
-  color: #9aa0a6;
-`;
-const newBadgeCss = css`
-  margin-left: 6px;
-  font-size: 10px;
-  color: #2f80ed;
-  border: 1px solid #2f80ed;
-  border-radius: 3px;
-  padding: 0 4px;
-`;
-const modalActionsCss = css`
-  display: flex;
-  gap: 8px;
-  padding: 12px 16px;
-  border-top: 1px solid #eee;
-`;

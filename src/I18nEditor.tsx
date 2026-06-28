@@ -3,12 +3,14 @@
  *
  * - 기본은 숨김. **Ctrl+Shift+D** (mac은 ⌘+Shift+D)로 표시/숨김 토글한다.
  * - 도구를 아코디언 섹션으로 나열한다.
+ * - UI 전체는 ShadowHost(Shadow DOM)에 격리 렌더되어 호스트 앱 CSS와 충돌하지 않는다.
  *
  * 호스트는 prod 번들에서 이 컴포넌트를 제외할 책임이 있다(dynamic import + 환경 게이팅 권장).
  */
 import {type MouseEvent as ReactMouseEvent, type ReactNode, useCallback, useEffect, useRef, useState} from 'react';
-import {css} from '@emotion/react';
+import {ChevronDown, ChevronRight, X} from 'lucide-react';
 import type {i18n as I18n} from 'i18next';
+import ShadowHost from './lib/ShadowHost';
 import I18nSection from './I18nSection';
 import OverrideBanner from './OverrideBanner';
 import type {Language, SheetsConfig} from './types';
@@ -82,115 +84,51 @@ export default function I18nEditor({i18n, languages, fallbackLng, sheets}: I18nE
   }, []);
 
   return (
-    <>
+    <ShadowHost>
       {/* override 경고 배너는 패널 열림 여부와 무관하게 항상 표시 */}
       <OverrideBanner i18n={i18n} />
       {visible && (
         <div
           ref={panelRef}
-          css={panelCss}
-          style={pos ? {top: pos.top, left: pos.left, right: 'auto', bottom: 'auto'} : undefined}
-          data-devtools>
+          data-devtools
+          className="fixed bottom-3 right-3 z-[2147483647] flex h-[420px] max-h-[90vh] min-h-[160px] w-72 min-w-[220px] max-w-[90vw] resize flex-col overflow-hidden rounded-lg border border-border bg-card text-card-foreground shadow-2xl"
+          style={pos ? {top: pos.top, left: pos.left, right: 'auto', bottom: 'auto'} : undefined}>
           {/* 패널 드래그 핸들 */}
           {/* biome-ignore lint/a11y/noStaticElementInteractions: 패널 드래그 핸들 (dev 전용 도구) */}
-          <div css={headerCss} onMouseDown={onHeaderMouseDown}>
-            <span css={titleCss}>🛠 i18next editor</span>
+          <div
+            onMouseDown={onHeaderMouseDown}
+            className="flex cursor-move select-none items-center justify-between bg-primary px-3 py-2 text-primary-foreground">
+            <span className="text-xs font-bold">🛠 i18next editor</span>
             <button
               type="button"
-              css={closeBtnCss}
               onMouseDown={e => e.stopPropagation()}
               onClick={() => setVisible(false)}
-              title="Ctrl+Shift+D">
-              ✕
+              title="Ctrl+Shift+D"
+              className="grid h-5 w-5 place-items-center rounded transition-colors hover:bg-white/20">
+              <X size={13} />
             </button>
           </div>
-          <div css={listCss}>
+          <div className="flex-1 overflow-auto">
             {SECTIONS.map(s => {
               const isOpen = expanded === s.id;
               return (
-                <div key={s.id} css={accordionCss}>
-                  <button type="button" css={accordionHeaderCss(isOpen)} onClick={() => toggleSection(s.id)}>
+                <div key={s.id} className="border-b border-border last:border-b-0">
+                  <button
+                    type="button"
+                    onClick={() => toggleSection(s.id)}
+                    className={`flex w-full cursor-pointer items-center justify-between px-3 py-2 text-xs font-semibold transition-colors ${
+                      isOpen ? 'bg-accent text-accent-foreground' : 'bg-muted/40 hover:bg-accent/60'
+                    }`}>
                     <span>{s.title}</span>
-                    <span>{isOpen ? '▾' : '▸'}</span>
+                    {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                   </button>
-                  {isOpen && <div css={accordionBodyCss}>{s.render()}</div>}
+                  {isOpen && <div className="p-3">{s.render()}</div>}
                 </div>
               );
             })}
           </div>
         </div>
       )}
-    </>
+    </ShadowHost>
   );
 }
-
-const panelCss = css`
-  position: fixed;
-  bottom: 12px;
-  right: 12px;
-  z-index: 2147483647;
-  display: flex;
-  flex-direction: column;
-  width: 280px;
-  height: 420px;
-  min-width: 220px;
-  min-height: 160px;
-  max-width: 90vw;
-  max-height: 90vh;
-  font-family: ui-monospace, monospace;
-  font-size: 12px;
-  color: #1a1a1a;
-  background: #fff;
-  border: 1px solid #d0d0d0;
-  border-radius: 8px;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18);
-  overflow: hidden;
-  resize: both;
-`;
-const headerCss = css`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 10px;
-  background: #2b2f36;
-  color: #fff;
-  cursor: move;
-  user-select: none;
-`;
-const titleCss = css`
-  font-weight: 700;
-`;
-const closeBtnCss = css`
-  cursor: pointer;
-  border: none;
-  background: transparent;
-  color: #fff;
-  font-size: 13px;
-  line-height: 1;
-  padding: 2px 4px;
-`;
-const listCss = css`
-  flex: 1;
-  overflow: auto;
-`;
-const accordionCss = css`
-  border-bottom: 1px solid #ececec;
-  &:last-of-type {
-    border-bottom: none;
-  }
-`;
-const accordionHeaderCss = (open: boolean) => css`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  cursor: pointer;
-  border: none;
-  background: ${open ? '#eef2fb' : '#f6f7f9'};
-  font: inherit;
-  font-weight: 600;
-  padding: 8px 10px;
-`;
-const accordionBodyCss = css`
-  padding: 10px;
-`;

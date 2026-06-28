@@ -9,7 +9,7 @@ import type {i18n as I18n} from 'i18next';
 import {Button} from './components/ui/button';
 import {getEffectiveValue, type Overrides, setOverrideValue} from './overrides';
 import type {Language, SheetsConfig} from './types';
-import {computeUpsert, type Diff, getAccessToken, numCols, providedLangs, readData, writeData} from './sheets';
+import {computeUpsert, type Diff, getAccessToken, numCols, parseSheetRows, providedLangs, readData, writeData} from './sheets';
 import SheetPushPreview from './SheetPushPreview';
 
 type Props = {
@@ -42,16 +42,10 @@ export default function SheetSync({i18n, languages, sheets, overrides, setOverri
       const rows = await readData(token, sheets.spreadsheetId, sheets.tab, numCols(sheets.keyCol, sheets.langCol));
       let acc = overrides;
       let count = 0;
-      for (const row of rows) {
-        const key = row[sheets.keyCol];
-        if (!key) continue;
-        for (const lng of languages) {
-          const val = row[sheets.langCol[lng]];
-          if (val == null || val === '') continue;
-          if (val === getEffectiveValue(acc, lng, key)) continue;
-          acc = setOverrideValue(i18n, acc, lng, key, val);
-          count += 1;
-        }
+      for (const {key, lang, value} of parseSheetRows(rows, languages, sheets.keyCol, sheets.langCol)) {
+        if (value === getEffectiveValue(acc, lang, key)) continue;
+        acc = setOverrideValue(i18n, acc, lang, key, value);
+        count += 1;
       }
       setOverrides(acc);
       onAfterPull?.();

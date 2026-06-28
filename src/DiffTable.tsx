@@ -7,18 +7,7 @@
 import type {ReactNode} from 'react';
 import {Badge} from './components/ui/badge';
 import type {Language} from './types';
-import type {Diff} from './sheets';
-
-/** diff 목록을 key별로 묶어 [key, {lang: diff}] 배열로 반환(key는 첫 등장 순서 유지). */
-function groupDiffsByKey(diffs: Diff[]): [string, Partial<Record<Language, Diff>>][] {
-  const byKey = new Map<string, Partial<Record<Language, Diff>>>();
-  for (const d of diffs) {
-    const g = byKey.get(d.key) ?? {};
-    g[d.lang] = d;
-    byKey.set(d.key, g);
-  }
-  return [...byKey];
-}
+import {type Diff, groupDiffsByKey} from './sheets';
 
 type Props = {
   diffs: Diff[];

@@ -23,7 +23,9 @@
     "build": "pnpm gen:css && tsdown src/index.tsx --format esm --dts --clean",
     "dev": "pnpm gen:css && tsdown src/index.tsx --format esm --dts --watch",
     "typecheck": "pnpm gen:css && tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "storybook": "pnpm gen:css && storybook dev -p 6006",
+    "build-storybook": "pnpm gen:css && storybook build"
   },
   "peerDependencies": {
     "i18next": ">=23",
@@ -32,17 +34,21 @@
     "react-i18next": ">=14"
   },
   "devDependencies": {
+    "@storybook/react-vite": "^10.4.6",
     "@tailwindcss/cli": "^4.3.1",
     "@types/react": "^18.2.48",
     "@types/react-dom": "^18.2.18",
+    "@vitejs/plugin-react": "^6.0.3",
     "happy-dom": "^20.10.6",
     "i18next": "^25.8.11",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-i18next": "^15.7.4",
+    "storybook": "^10.4.6",
     "tailwindcss": "^4.3.1",
     "tsdown": "^0.22.3",
     "typescript": "^5.9.3",
+    "vite": "^8.1.0",
     "vitest": "^2.1.9"
   },
   "dependencies": {

@@ -14,7 +14,9 @@ react-i18next 앱에 끼우는 인앱 번역 편집 devtool.
 pnpm add -D i18next-editor
 ```
 
-peerDependencies: `react`, `react-dom`, `i18next`, `react-i18next`, `@emotion/react`.
+peerDependencies: `react`, `react-dom`, `i18next`, `react-i18next`.
+
+UI는 Shadow DOM 안에 격리 렌더되고 Tailwind CSS가 번들에 인라인되므로, 호스트 앱에 Tailwind 등 스타일 설정은 필요 없다.
 
 ## 사용
 

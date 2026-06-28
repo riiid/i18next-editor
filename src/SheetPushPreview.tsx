@@ -9,6 +9,7 @@ import DiffTable from './DiffTable';
 import type {Language} from './types';
 import type {Diff} from './sheets';
 
+
 type Props = {
   diffs: Diff[];
   /** 변경되지 않은 언어 칸에 회색으로 표시할 현재값(key→lang→value). */

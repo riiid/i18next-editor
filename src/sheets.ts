@@ -85,7 +85,7 @@ export async function getAccessToken(clientId: string): Promise<string> {
 }
 
 /** 시트명을 A1 표기로 안전하게 인용한다('Web(game)'!A2:F 처럼). */
-function a1(tab: string, range: string): string {
+export function a1(tab: string, range: string): string {
   const quoted = `'${tab.replace(/'/g, "''")}'!${range}`;
   return encodeURIComponent(quoted);
 }
@@ -198,4 +198,38 @@ export function computeUpsert(
   }
 
   return {values, diffs, currentByKey};
+}
+
+/**
+ * 시트 행들에서 값이 있는 셀만 (key, lang, value)로 펼친다(pull용).
+ * key가 빈 행, 빈/누락 셀은 건너뛴다. 적용 여부(base/override 비교)는 호출부가 판단한다.
+ */
+export function parseSheetRows(
+  rows: string[][],
+  languages: Language[],
+  keyCol: number,
+  langCol: Record<Language, number>
+): {key: string; lang: Language; value: string}[] {
+  const out: {key: string; lang: Language; value: string}[] = [];
+  for (const row of rows) {
+    const key = row[keyCol];
+    if (!key) continue;
+    for (const lang of languages) {
+      const value = row[langCol[lang]];
+      if (value == null || value === '') continue;
+      out.push({key, lang, value});
+    }
+  }
+  return out;
+}
+
+/** diff 목록을 key별로 묶어 [key, {lang: diff}] 배열로 반환(key는 첫 등장 순서 유지). */
+export function groupDiffsByKey(diffs: Diff[]): [string, Partial<Record<Language, Diff>>][] {
+  const byKey = new Map<string, Partial<Record<Language, Diff>>>();
+  for (const d of diffs) {
+    const g = byKey.get(d.key) ?? {};
+    g[d.lang] = d;
+    byKey.set(d.key, g);
+  }
+  return [...byKey];
 }

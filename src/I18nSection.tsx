@@ -189,13 +189,13 @@ export default function I18nSection({i18n, languages, fallbackLng, sheets}: Prop
       <Separator />
       <div>
         <div className="mb-1.5 text-[11px] text-muted-foreground">표시 언어</div>
-        <div className="flex flex-wrap gap-1.5">
+        <div className="inline-flex flex-wrap divide-x divide-input overflow-hidden rounded-md border border-input">
           {languages.map(lng => (
             <Button
               key={lng}
               size="sm"
-              variant={lang === lng ? 'default' : 'outline'}
-              className="uppercase"
+              variant={lang === lng ? 'default' : 'ghost'}
+              className="rounded-none uppercase"
               onClick={() => changeLang(lng)}>
               {lng}
             </Button>

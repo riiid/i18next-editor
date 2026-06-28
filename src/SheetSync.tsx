@@ -9,7 +9,7 @@ import type {i18n as I18n} from 'i18next';
 import {Button} from './components/ui/button';
 import {getEffectiveValue, type Overrides, setOverrideValue} from './overrides';
 import type {Language, SheetsConfig} from './types';
-import {computeUpsert, type Diff, getAccessToken, providedLangs, readData, writeData} from './sheets';
+import {computeUpsert, type Diff, getAccessToken, numCols, providedLangs, readData, writeData} from './sheets';
 import SheetPushPreview from './SheetPushPreview';
 
 type Props = {
@@ -39,11 +39,11 @@ export default function SheetSync({i18n, languages, sheets, overrides, setOverri
     setStatus('구글 인증 및 시트 읽는 중...');
     try {
       const token = await getAccessToken(sheets.clientId);
-      const rows = await readData(token, sheets.spreadsheetId, sheets.tab);
+      const rows = await readData(token, sheets.spreadsheetId, sheets.tab, numCols(sheets.keyCol, sheets.langCol));
       let acc = overrides;
       let count = 0;
       for (const row of rows) {
-        const key = row[0];
+        const key = row[sheets.keyCol];
         if (!key) continue;
         for (const lng of languages) {
           const val = row[sheets.langCol[lng]];
@@ -73,8 +73,8 @@ export default function SheetSync({i18n, languages, sheets, overrides, setOverri
     setStatus('구글 인증 및 시트 읽는 중...');
     try {
       const token = await getAccessToken(sheets.clientId);
-      const existing = await readData(token, sheets.spreadsheetId, sheets.tab);
-      const {values, diffs, currentByKey} = computeUpsert(existing, overrides, languages, sheets.langCol);
+      const existing = await readData(token, sheets.spreadsheetId, sheets.tab, numCols(sheets.keyCol, sheets.langCol));
+      const {values, diffs, currentByKey} = computeUpsert(existing, overrides, languages, sheets.keyCol, sheets.langCol);
       if (diffs.length === 0) {
         setStatus('변경 사항이 없습니다 (시트와 동일).');
         return;

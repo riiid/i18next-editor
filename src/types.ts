@@ -17,9 +17,11 @@ export type SheetsConfig = {
   spreadsheetId: string;
   /** 대상 탭(시트) 이름. */
   tab: string;
+  /** A열(0-based) 기준 key 컬럼 인덱스. 기본 레이아웃이면 0(A열). */
+  keyCol: number;
   /**
-   * B열(0-based) 기준 각 언어의 컬럼 인덱스.
-   * 기본 레이아웃 B:key C:memo D:ko E:ja F:en → {ko:2, ja:3, en:4}.
+   * A열(0-based) 기준 각 언어의 컬럼 인덱스.
+   * 기본 레이아웃 A:key B:memo C:ko D:ja E:en → {keyCol:0, langCol:{ko:2, ja:3, en:4}}.
    */
   langCol: Record<Language, number>;
 };

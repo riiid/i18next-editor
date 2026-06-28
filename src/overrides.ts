@@ -10,7 +10,8 @@
  */
 import type {i18n as I18n} from 'i18next';
 import {NS, type Language} from './types';
-import {deepMerge, deletePath, getPath, setPath} from './paths';
+import {deepMerge, deletePath, flatten, getPath, setPath} from './paths';
+import type {Diff} from './sheets';
 
 const STORAGE_KEY = 'i18n-dev-overrides';
 
@@ -105,6 +106,35 @@ export function getEffectiveValue(overrides: Overrides, lng: Language, key: stri
   const ov = getPath(overrides[lng] ?? {}, key);
   if (typeof ov === 'string') return ov;
   return getBaseValue(lng, key) ?? '';
+}
+
+/**
+ * 현재 override 전체를 key×언어 diff 목록으로 펼친다(asIs=base 원본, toBe=override 값).
+ * DiffTable로 일괄 확인할 때 쓴다. base에 없던 키는 isNew=true.
+ */
+export function overrideDiffs(overrides: Overrides): {
+  diffs: Diff[];
+  currentByKey: Record<string, Record<Language, string>>;
+} {
+  const diffs: Diff[] = [];
+  const keys = new Set<string>();
+  for (const lng of languages) {
+    const bundle = overrides[lng];
+    if (!bundle) continue;
+    for (const [key, toBe] of Object.entries(flatten(bundle))) {
+      const base = getBaseValue(lng, key);
+      diffs.push({key, lang: lng, asIs: base ?? '', toBe, isNew: base === undefined});
+      keys.add(key);
+    }
+  }
+  // 변경 안 된 언어 칸에 보여줄 base 값(override 없는 언어는 원본 그대로).
+  const currentByKey: Record<string, Record<Language, string>> = {};
+  for (const key of keys) {
+    const rec = {} as Record<Language, string>;
+    for (const lng of languages) rec[lng] = getBaseValue(lng, key) ?? '';
+    currentByKey[key] = rec;
+  }
+  return {diffs, currentByKey};
 }
 
 /** 한 키의 한 언어 값을 수정해 override에 반영하고 i18next에 적용한다. */

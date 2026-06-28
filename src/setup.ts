@@ -10,17 +10,21 @@ import {markValue} from './marker';
 import {applyOverrides, initOverrideBase, loadOverrides} from './overrides';
 import type {Language} from './types';
 
-let initialized = false;
+const SETUP_KEY = '__i18nEditorSetup';
 
 export function setupI18nEditor(i18n: I18n, languages: Language[]): void {
-  if (initialized) return;
-  initialized = true;
+  // 가드도 i18n 인스턴스에 둔다. 모듈 전역 플래그는 Fast Refresh로 리셋되면 중복 setup을 부르고,
+  // 인스턴스 가드는 등록된 closure가 같은 i18n 객체를 거치므로 재등록 없이도 일관적이다.
+  const host = i18n as I18n & {[SETUP_KEY]?: boolean};
+  if (host[SETUP_KEY]) return;
+  host[SETUP_KEY] = true;
 
   i18n.use({
     type: 'postProcessor',
     name: 'devKeyMarker',
     process(value: string, key: string | string[]) {
-      return markValue(value, Array.isArray(key) ? key[0] : key);
+      // i18n 인스턴스를 캡처해 상태를 그 위에서 읽는다(모듈 카피가 갈라져도 동일 상태).
+      return markValue(i18n, value, Array.isArray(key) ? key[0] : key);
     },
   });
 

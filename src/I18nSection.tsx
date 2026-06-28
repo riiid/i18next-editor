@@ -27,13 +27,13 @@ import SheetSync from './SheetSync';
 const ATTR = 'data-i18n-key';
 
 /** 마커가 박힌 텍스트 노드를 훑어 부모 element에 data-i18n-key를 심는다. */
-function tagMarkedNodes(root: Node): void {
+function tagMarkedNodes(i18n: I18n, root: Node): void {
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
   let node = walker.nextNode();
   while (node) {
     const text = node.textContent ?? '';
     if (text.includes(MARKER_START)) {
-      const key = keyForMarkedText(text);
+      const key = keyForMarkedText(i18n, text);
       const parent = node.parentElement;
       if (key && parent) {
         parent.setAttribute(ATTR, key);
@@ -107,22 +107,22 @@ export default function I18nSection({i18n, languages, fallbackLng, sheets}: Prop
   // inspect 모드: 마커 활성화 + 리렌더 + observer/리스너 부착. 끌 때 정리.
   useEffect(() => {
     if (!inspecting) return;
-    setMarkerEnabled(true);
+    setMarkerEnabled(i18n, true);
     forceRerender(i18n);
 
     const observer = new MutationObserver(mutations => {
       for (const m of mutations) {
         if (m.type === 'characterData' && m.target.parentNode) {
-          tagMarkedNodes(m.target.parentNode);
+          tagMarkedNodes(i18n, m.target.parentNode);
         }
         m.addedNodes.forEach(n => {
-          tagMarkedNodes(n);
+          tagMarkedNodes(i18n, n);
         });
       }
     });
     observer.observe(document.body, {childList: true, subtree: true, characterData: true});
     // 첫 스캔(이미 렌더된 노드).
-    const initial = window.setTimeout(() => tagMarkedNodes(document.body), 0);
+    const initial = window.setTimeout(() => tagMarkedNodes(i18n, document.body), 0);
 
     const onMove = (e: MouseEvent) => {
       const el = document.elementFromPoint(e.clientX, e.clientY)?.closest(`[${ATTR}]`);
@@ -149,7 +149,7 @@ export default function I18nSection({i18n, languages, fallbackLng, sheets}: Prop
       window.clearTimeout(initial);
       document.removeEventListener('mousemove', onMove, true);
       document.removeEventListener('click', onClick, true);
-      setMarkerEnabled(false);
+      setMarkerEnabled(i18n, false);
       forceRerender(i18n);
       removeAllTags();
       setHover(null);

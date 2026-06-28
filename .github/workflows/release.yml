@@ -1,0 +1,49 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "릴리즈 버전 (예: 0.1.0). 비우면 package.json 버전 사용"
+        required: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: 버전 확정
+        id: v
+        run: |
+          VERSION="${{ inputs.version }}"
+          [ -z "$VERSION" ] && VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: package.json 버전 반영
+        run: npm pkg set version="${{ steps.v.outputs.version }}"
+
+      - run: pnpm build
+
+      - run: pnpm pack
+
+      - name: GitHub Release 생성 (tarball 첨부)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "v${{ steps.v.outputs.version }}" \
+            ./*.tgz \
+            --title "v${{ steps.v.outputs.version }}" \
+            --generate-notes

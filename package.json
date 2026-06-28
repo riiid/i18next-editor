@@ -26,7 +26,8 @@
     "typecheck": "pnpm gen:css && tsc --noEmit",
     "test": "vitest run",
     "storybook": "pnpm gen:css && storybook dev -p 6006",
-    "build-storybook": "pnpm gen:css && storybook build"
+    "build-storybook": "pnpm gen:css && storybook build",
+    "lint": "biome lint"
   },
   "peerDependencies": {
     "i18next": ">=23",
@@ -35,6 +36,7 @@
     "react-i18next": ">=14"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.5.1",
     "@storybook/react-vite": "^10.4.6",
     "@tailwindcss/cli": "^4.3.1",
     "@types/react": "^18.2.48",

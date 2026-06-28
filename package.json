@@ -1,0 +1,49 @@
+{
+  "name": "i18next-editor",
+  "version": "0.1.0",
+  "description": "In-app i18next translation editor devtool: 번역키 picker + localStorage override + 선택적 Google Sheets 동기화.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.mjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "pnpm": {
+    "onlyBuiltDependencies": ["esbuild"]
+  },
+  "scripts": {
+    "build": "tsdown src/index.tsx --format esm --dts --clean",
+    "dev": "tsdown src/index.tsx --format esm --dts --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "peerDependencies": {
+    "@emotion/react": ">=11",
+    "i18next": ">=23",
+    "react": ">=18",
+    "react-dom": ">=18",
+    "react-i18next": ">=14"
+  },
+  "devDependencies": {
+    "@emotion/react": "^11.14.0",
+    "@types/react": "^18.2.48",
+    "@types/react-dom": "^18.2.18",
+    "happy-dom": "^20.10.6",
+    "i18next": "^25.8.11",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-i18next": "^15.7.4",
+    "tsdown": "^0.22.3",
+    "typescript": "^5.9.3",
+    "vitest": "^2.1.9"
+  }
+}

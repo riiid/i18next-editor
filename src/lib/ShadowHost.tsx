@@ -9,6 +9,20 @@ import {type ReactNode, useLayoutEffect, useRef, useState} from 'react';
 import {createPortal} from 'react-dom';
 import styles from '../generated/styles';
 
+// @property 규칙은 shadow root 의 adoptedStyleSheets 안에서는 등록되지 않고(전역 등록만 유효),
+// 등록이 없으면 Tailwind v4 의 var(--tw-border-style) 등이 무효가 되어 테두리/링/그림자가 깨진다.
+// → @property 선언만 뽑아 document 에 1회 전역 등록한다(--tw-* 네임스페이스라 호스트 영향 없음).
+let propsInstalled = false;
+function installGlobalTailwindProperties() {
+  if (propsInstalled || typeof document === 'undefined') return;
+  propsInstalled = true;
+  const props = styles.match(/@property[^{]+\{[^}]*\}/g);
+  if (!props) return;
+  const sheet = new CSSStyleSheet();
+  sheet.replaceSync(props.join(''));
+  document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
+}
+
 export default function ShadowHost({children}: {children: ReactNode}) {
   const hostRef = useRef<HTMLDivElement>(null);
   const [root, setRoot] = useState<ShadowRoot | null>(null);
@@ -16,6 +30,7 @@ export default function ShadowHost({children}: {children: ReactNode}) {
   useLayoutEffect(() => {
     const host = hostRef.current;
     if (!host) return;
+    installGlobalTailwindProperties();
     const sr = host.shadowRoot ?? host.attachShadow({mode: 'open'});
     const sheet = new CSSStyleSheet();
     sheet.replaceSync(styles);

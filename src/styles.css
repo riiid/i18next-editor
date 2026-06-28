@@ -46,9 +46,10 @@
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  /* devtool은 흰 배경 위 작은 패널이라 shadcn 기본(0.922)보다 진한 테두리로 가시성 확보. */
+  --border: oklch(0.83 0 0);
+  --input: oklch(0.78 0 0);
+  --ring: oklch(0.6 0 0);
   --radius: 0.625rem;
 
   /* 호스트의 상속 가능한 속성(font/color/line-height)이 shadow 경계를 넘어오는 걸 차단. */

@@ -7,7 +7,7 @@
  */
 import {type ReactNode, useLayoutEffect, useRef, useState} from 'react';
 import {createPortal} from 'react-dom';
-import styles from '../generated/styles';
+import styles from '@/generated/styles';
 
 // @property 규칙은 shadow root 의 adoptedStyleSheets 안에서는 등록되지 않고(전역 등록만 유효),
 // 등록이 없으면 Tailwind v4 의 var(--tw-border-style) 등이 무효가 되어 테두리/링/그림자가 깨진다.

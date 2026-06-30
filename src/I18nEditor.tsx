@@ -22,6 +22,21 @@ const DEFAULT_SHORTCUT: KeyCode[] = ['Mod', 'Shift', 'D'];
 const shortcutLabel = (shortcut: KeyCode[]) =>
   shortcut.map(c => (c === 'Mod' ? 'Ctrl/⌘' : c)).join('+');
 
+const POS_KEY = 'i18n-editor-pos';
+
+/** 드래그 위치를 localStorage에서 복원한다(없거나 깨졌으면 null=기본 우하단). */
+function loadPos(): {top: number; left: number} | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(POS_KEY);
+    if (!raw) return null;
+    const p = JSON.parse(raw) as {top: number; left: number};
+    return typeof p?.top === 'number' && typeof p?.left === 'number' ? p : null;
+  } catch {
+    return null;
+  }
+}
+
 export type I18nEditorProps = {
   /** 호스트의 i18next 인스턴스. */
   i18n: I18n;
@@ -46,8 +61,8 @@ export default function I18nEditor({
   shortcut = DEFAULT_SHORTCUT,
 }: I18nEditorProps) {
   const [visible, setVisible] = useState(false);
-  // 드래그로 옮긴 위치. null이면 기본 위치(우하단).
-  const [pos, setPos] = useState<{top: number; left: number} | null>(null);
+  // 드래그로 옮긴 위치. null이면 기본 위치(우하단). localStorage에서 복원한다.
+  const [pos, setPos] = useState<{top: number; left: number} | null>(loadPos);
   const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -71,15 +86,23 @@ export default function I18nEditor({
     // 시작 시점에 left/top 기준으로 고정(기본 우하단 → 좌표 기반 전환).
     setPos({top: rect.top, left: rect.left});
 
+    let last = {top: rect.top, left: rect.left};
     const onMove = (ev: globalThis.MouseEvent) => {
       // 헤더 일부가 항상 화면에 남도록 살짝 clamp.
       const left = Math.min(Math.max(0, ev.clientX - dx), window.innerWidth - 40);
       const top = Math.min(Math.max(0, ev.clientY - dy), window.innerHeight - 24);
-      setPos({top, left});
+      last = {top, left};
+      setPos(last);
     };
     const onUp = () => {
       document.removeEventListener('mousemove', onMove);
       document.removeEventListener('mouseup', onUp);
+      // 드래그 종료 시점의 최종 위치만 저장(매 mousemove마다 쓰지 않음).
+      try {
+        window.localStorage.setItem(POS_KEY, JSON.stringify(last));
+      } catch {
+        // 저장 실패는 무시(위치 영속은 부가 기능).
+      }
     };
     document.addEventListener('mousemove', onMove);
     document.addEventListener('mouseup', onUp);

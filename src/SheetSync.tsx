@@ -11,7 +11,7 @@ import {Button} from './components/ui/button';
 import {SectionLabel} from './components/ui/section-label';
 import {getEffectiveValue, type Overrides, setOverrideValue} from './overrides';
 import type {Language, SheetsConfig} from './types';
-import {computeUpsert, type Diff, getAccessToken, numCols, parseSheetRows, providedLangs, readData, writeData} from './sheets';
+import {type CellRef, computeUpsert, type Diff, getAccessToken, numCols, parseSheetRows, providedLangs, readData, writeData} from './sheets';
 import SheetPushPreview from './SheetPushPreview';
 
 type Props = {
@@ -30,7 +30,7 @@ export default function SheetSync({i18n, languages, sheets, overrides, setOverri
   const [pending, setPending] = useState<{
     token: string;
     values: string[][];
-    changedRows: number[];
+    changedCells: CellRef[];
     diffs: Diff[];
     currentByKey: Record<string, Record<Language, string>>;
   } | null>(null);
@@ -71,12 +71,12 @@ export default function SheetSync({i18n, languages, sheets, overrides, setOverri
     try {
       const token = await getAccessToken(sheets.clientId);
       const existing = await readData(token, sheets.spreadsheetId, sheets.tab, numCols(sheets.keyCol, sheets.langCol));
-      const {values, diffs, changedRows, currentByKey} = computeUpsert(existing, overrides, languages, sheets.keyCol, sheets.langCol);
+      const {values, diffs, changedCells, currentByKey} = computeUpsert(existing, overrides, languages, sheets.keyCol, sheets.langCol);
       if (diffs.length === 0) {
         setStatus('변경 사항이 없습니다 (시트와 동일).');
         return;
       }
-      setPending({token, values, changedRows, diffs, currentByKey});
+      setPending({token, values, changedCells, diffs, currentByKey});
       setStatus('');
     } catch (e) {
       setStatus(`실패: ${(e as Error).message}`);
@@ -91,7 +91,7 @@ export default function SheetSync({i18n, languages, sheets, overrides, setOverri
     setBusy(true);
     setStatus('시트에 반영 중...');
     try {
-      await writeData(pending.token, sheets.spreadsheetId, sheets.tab, pending.values, pending.changedRows);
+      await writeData(pending.token, sheets.spreadsheetId, sheets.tab, pending.values, pending.changedCells);
       setStatus(`반영 완료: ${pending.diffs.length}건`);
       setPending(null);
     } catch (e) {

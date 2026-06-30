@@ -114,6 +114,13 @@ export async function writeData(token: string, spreadsheetId: string, tab: strin
   if (!res.ok) throw new Error(`시트 쓰기 실패 (${res.status}): ${await res.text()}`);
 }
 
+// 시트 셀은 개행을 리터럴 escape("\n" 두 글자)로 보관한다(앱 문자열 관례). override/i18next는
+// 실제 제어문자를 쓰므로 pull 시 되돌린다. ponytail: \n \t \r만 처리(번역값에 진짜 역슬래시는 거의 없음).
+/** 시트 셀의 리터럴 escape를 실제 제어문자로 되돌린다(pull용). */
+export function unescapeCell(s: string): string {
+  return s.replace(/\\([ntr])/g, (_, c) => (c === 'n' ? '\n' : c === 't' ? '\t' : '\r'));
+}
+
 export type Diff = {key: string; lang: Language; asIs: string; toBe: string; isNew: boolean};
 
 /** override에서 실제로 값이 있는(=수정한) 언어 목록. */
@@ -217,7 +224,7 @@ export function parseSheetRows(
     for (const lang of languages) {
       const value = row[langCol[lang]];
       if (value == null || value === '') continue;
-      out.push({key, lang, value});
+      out.push({key, lang, value: unescapeCell(value)});
     }
   }
   return out;

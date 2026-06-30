@@ -22,6 +22,11 @@ describe('providedLangs', () => {
 });
 
 describe('parseSheetRows', () => {
+  it('시트의 리터럴 \\n을 실제 개행으로 되돌린다', () => {
+    const rows = [['k', 'm', 'a\\nb', '', '']];
+    expect(parseSheetRows(rows, LANGS, KEY_COL, LANG_COL)).toEqual([{key: 'k', lang: 'ko', value: 'a\nb'}]);
+  });
+
   it('값 있는 셀만 (key, lang, value)로 펼친다', () => {
     const rows = [
       ['greeting', 'memo', '안녕', 'こんにちは', 'hi'],

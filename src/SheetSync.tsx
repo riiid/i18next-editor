@@ -4,7 +4,7 @@
  * override를 구글 시트에 직접 upsert하거나, 시트값을 override로 가져온다.
  * 시트 연동 설정(SheetsConfig)은 호스트가 주입할 때만 이 컴포넌트가 렌더된다.
  */
-import {useCallback, useState} from 'react';
+import {useCallback, useMemo, useState} from 'react';
 import type {i18n as I18n} from 'i18next';
 import {Download, FileSpreadsheet, Upload} from 'lucide-react';
 import {Button} from './components/ui/button';
@@ -22,11 +22,16 @@ type Props = {
   setOverrides: (next: Overrides) => void;
   /** 시트에서 가져와 override가 통째로 바뀐 뒤 호출(선택된 키 초기화 등). */
   onAfterPull?: () => void;
+  /** 결과·오류 메시지를 호스트 패널의 토스트로 띄운다(진행 상태는 버튼 라벨로 표시). */
+  onStatus?: (msg: string) => void;
+  /** 자체 confirm 모달. 미주입 시 window.confirm으로 폴백(스토리/단독 렌더용). */
+  confirm?: (message: string, opts?: {destructive?: boolean}) => Promise<boolean>;
 };
 
-export default function SheetSync({i18n, languages, sheets, overrides, setOverrides, onAfterPull}: Props) {
-  const [status, setStatus] = useState('');
+export default function SheetSync({i18n, languages, sheets, overrides, setOverrides, onAfterPull, onStatus, confirm}: Props) {
   const [busy, setBusy] = useState(false);
+  const setStatus = useMemo(() => onStatus ?? (() => {}), [onStatus]);
+  const ask = useMemo(() => confirm ?? ((msg: string) => Promise.resolve(window.confirm(msg))), [confirm]);
   const [pending, setPending] = useState<{
     token: string;
     diffs: Diff[];
@@ -35,9 +40,8 @@ export default function SheetSync({i18n, languages, sheets, overrides, setOverri
 
   // 시트의 번역값을 읽어 override로 주입한다(base와 같은 값은 setOverrideValue가 자동으로 버림).
   const pullFromSheet = useCallback(async () => {
-    if (!window.confirm('시트의 번역값을 가져와 현재 override에 덮어씁니다. 진행할까요?')) return;
+    if (!(await ask('시트의 번역값을 가져와 현재 override에 덮어씁니다. 진행할까요?'))) return;
     setBusy(true);
-    setStatus('구글 인증 및 시트 읽는 중...');
     try {
       const token = await getAccessToken(sheets.clientId);
       const rows = await readData(token, sheets.spreadsheetId, sheets.tab, numCols(sheets.keyCol, sheets.langCol));
@@ -56,7 +60,7 @@ export default function SheetSync({i18n, languages, sheets, overrides, setOverri
     } finally {
       setBusy(false);
     }
-  }, [i18n, languages, sheets, overrides, setOverrides, onAfterPull]);
+  }, [i18n, languages, sheets, overrides, setOverrides, onAfterPull, ask, setStatus]);
 
   // override를 시트에 직접 반영하기 전, OAuth + 시트 읽기로 as-is→to-be diff를 계산해 confirm 모달을 띄운다.
   const previewPush = useCallback(async () => {
@@ -65,7 +69,6 @@ export default function SheetSync({i18n, languages, sheets, overrides, setOverri
       return;
     }
     setBusy(true);
-    setStatus('구글 인증 및 시트 읽는 중...');
     try {
       const token = await getAccessToken(sheets.clientId);
       const existing = await readData(token, sheets.spreadsheetId, sheets.tab, numCols(sheets.keyCol, sheets.langCol));
@@ -75,19 +78,17 @@ export default function SheetSync({i18n, languages, sheets, overrides, setOverri
         return;
       }
       setPending({token, diffs, currentByKey});
-      setStatus('');
     } catch (e) {
       setStatus(`실패: ${(e as Error).message}`);
     } finally {
       setBusy(false);
     }
-  }, [i18n, languages, sheets, overrides]);
+  }, [languages, sheets, overrides, setStatus]);
 
   // confirm 후 실제 시트에 쓰기.
   const confirmPush = useCallback(async () => {
     if (!pending) return;
     setBusy(true);
-    setStatus('변경 사항 재확인 중...');
     try {
       // 낙관적 동시성: 미리보기 이후 누가 시트를 편집했는지 다시 읽어 확인한다.
       // 시트 API엔 조건부 쓰기/락이 없으므로, 적용 직전 재계산한 diff가 미리보기와 같을 때만 쓴다.
@@ -107,7 +108,7 @@ export default function SheetSync({i18n, languages, sheets, overrides, setOverri
     } finally {
       setBusy(false);
     }
-  }, [pending, sheets, overrides, languages]);
+  }, [pending, sheets, overrides, languages, setStatus]);
 
   return (
     <div className="flex flex-col gap-2">
@@ -126,7 +127,6 @@ export default function SheetSync({i18n, languages, sheets, overrides, setOverri
           {busy ? '처리 중...' : '시트에서 가져오기'}
         </Button>
       </div>
-      {status && <div className="break-all text-primary">{status}</div>}
 
       {/* as-is → to-be 미리보기 confirm 모달 */}
       {pending && (

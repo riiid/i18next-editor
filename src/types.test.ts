@@ -16,8 +16,12 @@ describe('getLanguage', () => {
     expect(getLanguage('fr', LANGS, 'en')).toBe('en');
   });
 
-  it('첫 매칭을 우선한다(목록 순서)', () => {
-    expect(getLanguage('en-GB', ['en', 'en-GB'], 'ko')).toBe('en');
+  it('prefix가 겹치면 더 구체적인(긴) 코드를 우선한다', () => {
+    expect(getLanguage('en-GB', ['en', 'en-GB'], 'ko')).toBe('en-GB');
+    // 목록 순서와 무관(긴 코드가 먼저든 나중이든 동일).
+    expect(getLanguage('en-GB', ['en-GB', 'en'], 'ko')).toBe('en-GB');
+    // 정확히 짧은 코드만 맞으면 그대로 매칭.
+    expect(getLanguage('en-US', ['en', 'en-GB'], 'ko')).toBe('en');
   });
 });
 

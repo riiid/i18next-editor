@@ -274,6 +274,19 @@ export function parseSheetRows(
   return out;
 }
 
+/**
+ * 두 diff 목록이 (순서 무관) 동일한지 비교한다.
+ * 낙관적 동시성 체크용: 미리보기 때 계산한 diff와 적용 직전 재계산한 diff가 같아야 안전하게 쓴다.
+ * asIs(시트 현재값)가 달라졌거나, 새 key가 그 사이 추가/변경됐으면 시그니처가 달라져 불일치로 잡힌다.
+ */
+export function sameDiffs(a: Diff[], b: Diff[]): boolean {
+  if (a.length !== b.length) return false;
+  const sig = (d: Diff) => JSON.stringify([d.key, d.lang, d.asIs, d.toBe, d.isNew]);
+  const sa = a.map(sig).sort();
+  const sb = b.map(sig).sort();
+  return sa.every((s, i) => s === sb[i]);
+}
+
 /** diff 목록을 key별로 묶어 [key, {lang: diff}] 배열로 반환(key는 첫 등장 순서 유지). */
 export function groupDiffsByKey(diffs: Diff[]): [string, Partial<Record<Language, Diff>>][] {
   const byKey = new Map<string, Partial<Record<Language, Diff>>>();

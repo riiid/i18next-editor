@@ -14,9 +14,6 @@ import type {Overrides} from './overrides';
 const GIS_SRC = 'https://accounts.google.com/gsi/client';
 const SHEETS_SCOPE = 'https://www.googleapis.com/auth/spreadsheets';
 
-// 데이터 영역은 A열부터 시작하고(헤더 1행 제외), 끝 컬럼은 config(keyCol/langCol)에서 도출한다.
-const WRITE_ANCHOR = 'A2';
-
 /** 0-based 컬럼 인덱스를 A1 컬럼 문자로 변환한다(0→A, 25→Z, 26→AA). */
 function colLetter(idx: number): string {
   let s = '';
@@ -85,9 +82,13 @@ export async function getAccessToken(clientId: string): Promise<string> {
 }
 
 /** 시트명을 A1 표기로 안전하게 인용한다('Web(game)'!A2:F 처럼). */
+/** 'tab'!range 형태의 A1 표기(인코딩 전). batchUpdate처럼 body에 넣는 range는 인코딩하면 안 된다. */
+function sheetRange(tab: string, range: string): string {
+  return `'${tab.replace(/'/g, "''")}'!${range}`;
+}
+
 export function a1(tab: string, range: string): string {
-  const quoted = `'${tab.replace(/'/g, "''")}'!${range}`;
-  return encodeURIComponent(quoted);
+  return encodeURIComponent(sheetRange(tab, range));
 }
 
 /** 시트의 데이터 영역(A2부터 cols개 컬럼)을 2차원 문자열 배열로 읽는다. */
@@ -100,16 +101,30 @@ export async function readData(token: string, spreadsheetId: string, tab: string
   return json.values ?? [];
 }
 
-/** values(2차원 배열)를 A2부터 한 번에 덮어쓴다(RAW). */
-export async function writeData(token: string, spreadsheetId: string, tab: string, values: string[][]): Promise<void> {
-  // 빈 문자열('')을 그대로 쓰면 셀에 빈 문자열이 "값"으로 기록되어 ISBLANK가 false가 된다.
-  // null로 보내면 해당 셀을 건드리지 않아(skip) 원래의 빈 셀 상태가 유지된다.
-  const sanitized: (string | null)[][] = values.map(row => row.map(cell => (cell === '' ? null : cell)));
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(spreadsheetId)}/values/${a1(tab, WRITE_ANCHOR)}?valueInputOption=RAW`;
+/**
+ * 변경된 행만 골라 values:batchUpdate로 부분 갱신한다(RAW, 단일 요청).
+ * 변경 안 된 행/수식/후행 빈 셀은 건드리지 않는다. changedRows는 values 기준 행 인덱스(0 = 시트 A2행).
+ */
+export async function writeData(
+  token: string,
+  spreadsheetId: string,
+  tab: string,
+  values: string[][],
+  changedRows: number[]
+): Promise<void> {
+  if (changedRows.length === 0) return;
+  const cols = values[0]?.length ?? 0;
+  const lastCol = colLetter(cols - 1);
+  // 빈 문자열('')은 null로 보낸다: 셀에 ''를 기록하면 ISBLANK가 false가 되므로, null로 skip해 빈 셀을 유지한다.
+  const data = changedRows.map(i => ({
+    range: sheetRange(tab, `A${i + 2}:${lastCol}${i + 2}`),
+    values: [values[i].map(cell => (cell === '' ? null : cell))],
+  }));
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(spreadsheetId)}/values:batchUpdate`;
   const res = await fetch(url, {
-    method: 'PUT',
+    method: 'POST',
     headers: {Authorization: `Bearer ${token}`, 'Content-Type': 'application/json'},
-    body: JSON.stringify({values: sanitized}),
+    body: JSON.stringify({valueInputOption: 'RAW', data}),
   });
   if (!res.ok) throw new Error(`시트 쓰기 실패 (${res.status}): ${await res.text()}`);
 }
@@ -149,6 +164,8 @@ export function computeUpsert(
 ): {
   values: string[][];
   diffs: Diff[];
+  /** 변경된 행 인덱스(values 기준, 오름차순). batchUpdate로 이 행들만 쓴다. */
+  changedRows: number[];
   /** 변경된 key별 언어별 기존(as-is) 값. 변경 안 된 언어 셀을 미리보기에 회색으로 보여주기 위함. */
   currentByKey: Record<string, Record<Language, string>>;
 } {
@@ -169,6 +186,7 @@ export function computeUpsert(
   }
 
   const diffs: Diff[] = [];
+  const changed = new Set<number>();
 
   for (const lang of providedLangs(overrides, languages)) {
     const colIdx = langCol[lang];
@@ -179,6 +197,7 @@ export function computeUpsert(
         const asIs = values[idx][colIdx] ?? '';
         if (asIs !== toBe) {
           values[idx][colIdx] = toBe;
+          changed.add(idx);
           diffs.push({key, lang, asIs, toBe, isNew: false});
         }
       } else {
@@ -186,11 +205,13 @@ export function computeUpsert(
         newRow[keyCol] = key;
         newRow[colIdx] = toBe;
         rowByKey[key] = values.length;
+        changed.add(values.length);
         values.push(newRow);
         diffs.push({key, lang, asIs: '', toBe, isNew: true});
       }
     }
   }
+  const changedRows = [...changed].sort((a, b) => a - b);
 
   // 변경된 key마다 모든 언어의 기존값을 모은다(변경 안 된 언어 셀 표시용).
   const currentByKey: Record<string, Record<Language, string>> = {};
@@ -204,7 +225,7 @@ export function computeUpsert(
     currentByKey[key] = rec;
   }
 
-  return {values, diffs, currentByKey};
+  return {values, diffs, changedRows, currentByKey};
 }
 
 /**

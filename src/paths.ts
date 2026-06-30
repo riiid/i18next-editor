@@ -13,8 +13,13 @@ export function getPath(obj: unknown, path: string): unknown {
   }, obj);
 }
 
+// 프로토타입 오염 방지: 시트 pull 등 외부 입력 키가 __proto__/constructor/prototype를
+// 거치면 Object.prototype을 전역 오염시킬 수 있으므로 거른다(정상 i18n 키엔 등장하지 않음).
+const UNSAFE_KEY = new Set(['__proto__', 'constructor', 'prototype']);
+
 export function setPath(obj: Record<string, unknown>, path: string, value: unknown): void {
   const keys = path.split('.');
+  if (keys.some(k => UNSAFE_KEY.has(k))) return;
   let cur = obj;
   for (let i = 0; i < keys.length - 1; i++) {
     const k = keys[i];
@@ -28,6 +33,7 @@ export function setPath(obj: Record<string, unknown>, path: string, value: unkno
 
 export function deletePath(obj: Record<string, unknown>, path: string): void {
   const keys = path.split('.');
+  if (keys.some(k => UNSAFE_KEY.has(k))) return;
   // 경로상의 (부모, 키) 스택을 쌓으며 내려간다.
   const trail: [Record<string, unknown>, string][] = [];
   let cur: Record<string, unknown> = obj;

@@ -26,6 +26,14 @@ describe('setPath', () => {
     expect(o).toEqual({a: {x: 1, y: 2}});
   });
 
+  it('__proto__/constructor/prototype 키는 무시해 프로토타입 오염을 막는다', () => {
+    const o: Record<string, unknown> = {};
+    setPath(o, '__proto__.polluted', 'x');
+    setPath(o, 'constructor.prototype.polluted', 'x');
+    expect(({} as Record<string, unknown>).polluted).toBeUndefined();
+    expect(Object.keys(o)).toEqual([]);
+  });
+
   it('경로 중간이 비객체면 덮어쓰고 진행한다', () => {
     const o: Record<string, unknown> = {a: 5};
     setPath(o, 'a.b', 'v');

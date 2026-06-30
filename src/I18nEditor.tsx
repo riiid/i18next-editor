@@ -8,7 +8,7 @@
  * 호스트는 prod 번들에서 이 컴포넌트를 제외할 책임이 있다(dynamic import + 환경 게이팅 권장).
  */
 import {type MouseEvent as ReactMouseEvent, useCallback, useEffect, useRef, useState} from 'react';
-import {X} from 'lucide-react';
+import {Wrench, X} from 'lucide-react';
 import type {i18n as I18n} from 'i18next';
 import ShadowHost from './lib/ShadowHost';
 import I18nSection from './I18nSection';
@@ -104,7 +104,9 @@ export default function I18nEditor({
           <div
             onMouseDown={onHeaderMouseDown}
             className="flex cursor-move select-none items-center justify-between bg-primary px-3 py-2 text-primary-foreground">
-            <span className="text-xs font-bold">🛠 i18next editor</span>
+            <span className="flex items-center gap-1.5 text-xs font-bold">
+              <Wrench size={13} /> i18next editor
+            </span>
             <button
               type="button"
               onMouseDown={e => e.stopPropagation()}

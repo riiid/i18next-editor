@@ -6,6 +6,7 @@
  * - pointer-events:none 이라 클릭을 가로채지 않는다.
  */
 import {useEffect, useState} from 'react';
+import {TriangleAlert} from 'lucide-react';
 import type {i18n as I18n} from 'i18next';
 import {hasAnyOverride, loadOverrides} from './overrides';
 
@@ -23,7 +24,8 @@ export default function OverrideBanner({i18n}: {i18n: I18n}) {
 
   if (!active) return null;
   return (
-    <div className="pointer-events-none fixed inset-x-0 top-0 z-[99] bg-destructive py-1 text-center text-xs font-bold text-destructive-foreground opacity-30">
+    <div className="pointer-events-none fixed inset-x-0 top-0 z-[99] flex items-center justify-center gap-1.5 bg-destructive py-1 text-center text-xs font-bold text-destructive-foreground opacity-30">
+      <TriangleAlert size={13} />
       override된 번역키가 있어요
     </div>
   );

@@ -23,6 +23,8 @@
     "gen:css": "node scripts/gen-css.mjs",
     "build": "pnpm gen:css && tsdown src/index.tsx --format esm --dts --clean",
     "dev": "pnpm gen:css && tsdown src/index.tsx --format esm --dts --watch",
+    "demo": "pnpm gen:css && vite --config demo/vite.config.ts",
+    "demo:build": "pnpm gen:css && vite build --config demo/vite.config.ts",
     "typecheck": "pnpm gen:css && tsc --noEmit",
     "test": "vitest run",
     "storybook": "pnpm gen:css && (node scripts/gen-css.mjs --watch & storybook dev -p 6006)",

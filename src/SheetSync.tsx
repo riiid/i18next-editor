@@ -6,7 +6,9 @@
  */
 import {useCallback, useState} from 'react';
 import type {i18n as I18n} from 'i18next';
+import {Download, FileSpreadsheet, Upload} from 'lucide-react';
 import {Button} from './components/ui/button';
+import {SectionLabel} from './components/ui/section-label';
 import {getEffectiveValue, type Overrides, setOverrideValue} from './overrides';
 import type {Language, SheetsConfig} from './types';
 import {computeUpsert, type Diff, getAccessToken, numCols, parseSheetRows, providedLangs, readData, writeData} from './sheets';
@@ -100,15 +102,18 @@ export default function SheetSync({i18n, languages, sheets, overrides, setOverri
 
   return (
     <div className="flex flex-col gap-2">
+      <SectionLabel icon={FileSpreadsheet}>구글 시트 동기화</SectionLabel>
       <p className="m-0 leading-relaxed text-muted-foreground">
         지금까지 저장된 전체 변경사항을 확인하고 시트에 반영할 수 있어요. 개발자가 코드에 시트 내용을 반영해야 제품에
         최종 적용돼요.
       </p>
       <div className="flex flex-wrap gap-1.5">
         <Button disabled={busy} onClick={previewPush}>
+          <Upload size={14} />
           {busy ? '처리 중...' : '시트에 적용하기'}
         </Button>
         <Button variant="outline" disabled={busy} onClick={pullFromSheet}>
+          <Download size={14} />
           {busy ? '처리 중...' : '시트에서 가져오기'}
         </Button>
       </div>

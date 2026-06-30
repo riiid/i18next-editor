@@ -4,6 +4,7 @@
  * 현재 적용 중인 override 전부를 key×언어 diff 표로 보여준다(asIs=레포 원본, toBe=override 값).
  * 시트 미리보기와 같은 DiffTable을 공유한다. 행마다 "되돌리기"로 그 키의 override만 해제할 수 있다.
  */
+import {ListChecks, Undo2, X} from 'lucide-react';
 import {Button} from './components/ui/button';
 import DiffTable from './DiffTable';
 import type {Language} from './types';
@@ -22,7 +23,10 @@ export default function OverrideReview({diffs, currentByKey, languages, onRevert
   return (
     <div className="fixed inset-0 z-[2147483647] flex items-center justify-center bg-black/45 p-6">
       <div className="flex max-h-[80vh] w-[min(720px,92vw)] flex-col overflow-hidden rounded-lg bg-card text-card-foreground shadow-2xl">
-        <div className="bg-primary px-4 py-3 font-bold text-primary-foreground">override된 번역키 · {keyCount}건</div>
+        <div className="flex items-center gap-1.5 bg-primary px-4 py-3 font-bold text-primary-foreground">
+          <ListChecks size={15} />
+          override된 번역키 · {keyCount}건
+        </div>
         <div className="overflow-auto px-4 py-2">
           {diffs.length === 0 ? (
             <p className="py-6 text-center text-muted-foreground">override된 번역키가 없어요.</p>
@@ -33,6 +37,7 @@ export default function OverrideReview({diffs, currentByKey, languages, onRevert
               languages={languages}
               rowAction={key => (
                 <Button size="sm" variant="outline" onClick={() => onRevertKey(key)}>
+                  <Undo2 size={13} />
                   되돌리기
                 </Button>
               )}
@@ -41,6 +46,7 @@ export default function OverrideReview({diffs, currentByKey, languages, onRevert
         </div>
         <div className="flex gap-2 border-t border-border px-4 py-3">
           <Button variant="outline" onClick={onClose}>
+            <X size={14} />
             닫기
           </Button>
         </div>

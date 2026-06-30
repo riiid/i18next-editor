@@ -46,6 +46,20 @@ export const WithPickedKey: Story = {
   },
 };
 
+// 토스트 스택: 초기화 버튼을 연속으로 눌러 하단 중앙에 토스트가 쌓이는 모습.
+export const WithToasts: Story = {
+  args: {i18n, languages: ['ko', 'en'], fallbackLng: 'en'},
+  play: async ({canvasElement}) => {
+    const root = canvasElement.querySelector('div')?.shadowRoot;
+    const reset = [...(root?.querySelectorAll('button') ?? [])].find(
+      b => b.textContent?.includes('초기화')
+    );
+    reset?.click();
+    await new Promise(r => setTimeout(r, 100));
+    reset?.click();
+  },
+};
+
 // 시트 연동 UI까지 켜진 버전(데모 값이라 실제 OAuth는 동작하지 않음).
 export const WithSheets: Story = {
   args: {

@@ -30,6 +30,7 @@ export default function SheetSync({i18n, languages, sheets, overrides, setOverri
   const [pending, setPending] = useState<{
     token: string;
     values: string[][];
+    changedRows: number[];
     diffs: Diff[];
     currentByKey: Record<string, Record<Language, string>>;
   } | null>(null);
@@ -70,12 +71,12 @@ export default function SheetSync({i18n, languages, sheets, overrides, setOverri
     try {
       const token = await getAccessToken(sheets.clientId);
       const existing = await readData(token, sheets.spreadsheetId, sheets.tab, numCols(sheets.keyCol, sheets.langCol));
-      const {values, diffs, currentByKey} = computeUpsert(existing, overrides, languages, sheets.keyCol, sheets.langCol);
+      const {values, diffs, changedRows, currentByKey} = computeUpsert(existing, overrides, languages, sheets.keyCol, sheets.langCol);
       if (diffs.length === 0) {
         setStatus('변경 사항이 없습니다 (시트와 동일).');
         return;
       }
-      setPending({token, values, diffs, currentByKey});
+      setPending({token, values, changedRows, diffs, currentByKey});
       setStatus('');
     } catch (e) {
       setStatus(`실패: ${(e as Error).message}`);
@@ -90,7 +91,7 @@ export default function SheetSync({i18n, languages, sheets, overrides, setOverri
     setBusy(true);
     setStatus('시트에 반영 중...');
     try {
-      await writeData(pending.token, sheets.spreadsheetId, sheets.tab, pending.values);
+      await writeData(pending.token, sheets.spreadsheetId, sheets.tab, pending.values, pending.changedRows);
       setStatus(`반영 완료: ${pending.diffs.length}건`);
       setPending(null);
     } catch (e) {

@@ -197,7 +197,9 @@ export function computeUpsert(
   const rowsByKey: Record<string, number[]> = {};
   for (let i = 0; i < values.length; i++) {
     const k = values[i][keyCol];
-    if (k) (rowsByKey[k] ??= []).push(i);
+    if (!k) continue;
+    if (!rowsByKey[k]) rowsByKey[k] = [];
+    rowsByKey[k].push(i);
   }
 
   const diffs: Diff[] = [];

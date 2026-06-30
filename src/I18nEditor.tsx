@@ -13,7 +13,14 @@ import type {i18n as I18n} from 'i18next';
 import ShadowHost from './lib/ShadowHost';
 import I18nSection from './I18nSection';
 import OverrideBanner from './OverrideBanner';
-import type {Language, SheetsConfig} from './types';
+import {type KeyCode, matchKey, type Language, type SheetsConfig} from './types';
+
+/** 기본 토글 단축키: Ctrl+Shift+D (mac은 ⌘+Shift+D). */
+const DEFAULT_SHORTCUT: KeyCode[] = ['Mod', 'Shift', 'D'];
+
+/** 단축키 배열을 표시용 라벨로(예: "Ctrl/⌘+Shift+D"). */
+const shortcutLabel = (shortcut: KeyCode[]) =>
+  shortcut.map(c => (c === 'Mod' ? 'Ctrl/⌘' : c)).join('+');
 
 export type I18nEditorProps = {
   /** 호스트의 i18next 인스턴스. */
@@ -26,9 +33,18 @@ export type I18nEditorProps = {
   sheets?: SheetsConfig;
   /** 패널 기본 크기(px). 미지정 시 288×420. 드래그/resize는 그대로 동작. */
   defaultSize?: {width: number; height: number};
+  /** 표시/숨김 토글 단축키(모든 키 AND). 미지정 시 ['Mod','Shift','D']. */
+  shortcut?: KeyCode[];
 };
 
-export default function I18nEditor({i18n, languages, fallbackLng, sheets, defaultSize}: I18nEditorProps) {
+export default function I18nEditor({
+  i18n,
+  languages,
+  fallbackLng,
+  sheets,
+  defaultSize,
+  shortcut = DEFAULT_SHORTCUT,
+}: I18nEditorProps) {
   const [visible, setVisible] = useState(false);
   // 드래그로 옮긴 위치. null이면 기본 위치(우하단).
   const [pos, setPos] = useState<{top: number; left: number} | null>(null);
@@ -36,14 +52,14 @@ export default function I18nEditor({i18n, languages, fallbackLng, sheets, defaul
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'D' || e.key === 'd')) {
+      if (shortcut.length > 0 && shortcut.every(code => matchKey(e, code))) {
         e.preventDefault();
         setVisible(v => !v);
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, []);
+  }, [shortcut]);
 
   // 헤더를 잡고 패널을 드래그한다.
   const onHeaderMouseDown = useCallback((e: ReactMouseEvent) => {
@@ -93,7 +109,7 @@ export default function I18nEditor({i18n, languages, fallbackLng, sheets, defaul
               type="button"
               onMouseDown={e => e.stopPropagation()}
               onClick={() => setVisible(false)}
-              title="Ctrl+Shift+D"
+              title={shortcutLabel(shortcut)}
               className="grid h-5 w-5 place-items-center rounded transition-colors hover:bg-white/20">
               <X size={13} />
             </button>

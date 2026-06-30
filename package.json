@@ -25,7 +25,7 @@
     "dev": "pnpm gen:css && tsdown src/index.tsx --format esm --dts --watch",
     "typecheck": "pnpm gen:css && tsc --noEmit",
     "test": "vitest run",
-    "storybook": "pnpm gen:css && storybook dev -p 6006",
+    "storybook": "pnpm gen:css && (node scripts/gen-css.mjs --watch & storybook dev -p 6006)",
     "build-storybook": "pnpm gen:css && storybook build",
     "lint": "biome lint"
   },

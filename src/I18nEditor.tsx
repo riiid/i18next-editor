@@ -7,7 +7,7 @@
  *
  * 호스트는 prod 번들에서 이 컴포넌트를 제외할 책임이 있다(dynamic import + 환경 게이팅 권장).
  */
-import {type MouseEvent as ReactMouseEvent, useCallback, useEffect, useRef, useState} from 'react';
+import {type MouseEvent as ReactMouseEvent, useCallback, useEffect, useLayoutEffect, useRef, useState} from 'react';
 import {Wrench, X} from 'lucide-react';
 import type {i18n as I18n} from 'i18next';
 import ShadowHost from './lib/ShadowHost';
@@ -23,6 +23,7 @@ const shortcutLabel = (shortcut: KeyCode[]) =>
   shortcut.map(c => (c === 'Mod' ? 'Ctrl/⌘' : c)).join('+');
 
 const POS_KEY = 'i18n-editor-pos';
+const SIZE_KEY = 'i18n-editor-size';
 
 /** 드래그 위치를 localStorage에서 복원한다(없거나 깨졌으면 null=기본 우하단). */
 function loadPos(): {top: number; left: number} | null {
@@ -32,6 +33,19 @@ function loadPos(): {top: number; left: number} | null {
     if (!raw) return null;
     const p = JSON.parse(raw) as {top: number; left: number};
     return typeof p?.top === 'number' && typeof p?.left === 'number' ? p : null;
+  } catch {
+    return null;
+  }
+}
+
+/** 조절한 패널 크기를 localStorage에서 복원한다(없거나 깨졌으면 null=defaultSize). */
+function loadSize(): {width: number; height: number} | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(SIZE_KEY);
+    if (!raw) return null;
+    const s = JSON.parse(raw) as {width: number; height: number};
+    return typeof s?.width === 'number' && typeof s?.height === 'number' ? s : null;
   } catch {
     return null;
   }
@@ -76,6 +90,35 @@ export default function I18nEditor({
     return () => window.removeEventListener('keydown', onKey);
   }, [shortcut]);
 
+  // 패널이 열릴 때: 저장된 크기를 복원하고, CSS resize로 바뀐 최종 크기를 저장한다.
+  // (resize는 React state를 거치지 않고 DOM을 직접 바꾸므로 ResizeObserver로 잡는다.)
+  useLayoutEffect(() => {
+    const el = panelRef.current;
+    if (!el) return;
+    // 크기는 style prop이 아니라 여기서만 소유한다(드래그 리렌더가 resize한 크기를 덮어쓰지 않도록).
+    const init = loadSize() ?? defaultSize ?? {width: 288, height: 420};
+    el.style.width = `${init.width}px`;
+    el.style.height = `${init.height}px`;
+    // 연속 resize는 rAF로 프레임당 1회만 저장.
+    let rafId = 0;
+    const ro = new ResizeObserver(() => {
+      if (rafId) return;
+      rafId = window.requestAnimationFrame(() => {
+        rafId = 0;
+        try {
+          window.localStorage.setItem(SIZE_KEY, JSON.stringify({width: el.offsetWidth, height: el.offsetHeight}));
+        } catch {
+          // 저장 실패는 무시(크기 영속은 부가 기능).
+        }
+      });
+    });
+    ro.observe(el);
+    return () => {
+      ro.disconnect();
+      if (rafId) window.cancelAnimationFrame(rafId);
+    };
+  }, [visible, defaultSize]);
+
   // 헤더를 잡고 패널을 드래그한다.
   const onHeaderMouseDown = useCallback((e: ReactMouseEvent) => {
     const el = panelRef.current;
@@ -117,11 +160,7 @@ export default function I18nEditor({
           ref={panelRef}
           data-devtools
           className="fixed bottom-3 right-3 z-[2147483647] flex max-h-[90vh] min-h-[160px] min-w-[220px] max-w-[90vw] resize flex-col overflow-hidden rounded-lg border border-border bg-card text-card-foreground shadow-2xl"
-          style={{
-            width: defaultSize?.width ?? 288,
-            height: defaultSize?.height ?? 420,
-            ...(pos ? {top: pos.top, left: pos.left, right: 'auto', bottom: 'auto'} : null),
-          }}>
+          style={pos ? {top: pos.top, left: pos.left, right: 'auto', bottom: 'auto'} : undefined}>
           {/* 패널 드래그 핸들 */}
           {/* biome-ignore lint/a11y/noStaticElementInteractions: 패널 드래그 핸들 (dev 전용 도구) */}
           <div

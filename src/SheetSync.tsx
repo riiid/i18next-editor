@@ -107,7 +107,7 @@ export default function SheetSync({i18n, languages, sheets, overrides, setOverri
         지금까지 저장된 전체 변경사항을 확인하고 시트에 반영할 수 있어요. 개발자가 코드에 시트 내용을 반영해야 제품에
         최종 적용돼요.
       </p>
-      <div className="flex flex-wrap gap-1.5">
+      <div className="grid grid-cols-2 gap-1.5">
         <Button disabled={busy} onClick={previewPush}>
           <Upload size={14} />
           {busy ? '처리 중...' : '시트에 적용하기'}

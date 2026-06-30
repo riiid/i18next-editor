@@ -4,34 +4,105 @@ import {createRoot} from 'react-dom/client';
 import {I18nextProvider, initReactI18next, useTranslation} from 'react-i18next';
 import {I18nEditor} from '@';
 
+// 데모 본문 = i18next-editor 사용설명서. 각 문장이 번역키라서 picker로 하나씩 클릭해 확인할 수 있다.
+// ja 는 일부러 일부 키를 비워 "미번역 배지"를 보여준다.
 const resources = {
   ko: {
     translation: {
-      title: 'i18next-editor 데모',
-      subtitle: '화면의 번역 텍스트를 클릭해 바로 고쳐보세요.',
-      greeting: '안녕하세요, {{name}}님!',
-      cta: '시작하기',
-      nested: {description: '중첩 키도 그대로 잡힙니다.'},
-      // ja/en 에는 일부러 빠뜨려 "미번역 배지"를 보여준다.
-      koOnly: '이 키는 한국어에만 있어요.',
+      title: 'i18next-editor 사용설명서',
+
+      summaryHeading: '한 줄 요약',
+      summaryBody:
+        '우리 서비스 화면에 보이는 글자(번역 문구)를, 화면에서 직접 클릭해 고치고 바로 미리볼 수 있게 해주는 도구입니다.',
+      summaryWarning:
+        '⚠️ 여기서 고친 값은 내 화면 미리보기일 뿐입니다. 진짜로 서비스에 반영되려면 그 내용이 코드(번역 파일)에 들어가야 합니다.',
+
+      usageHeading: '사용 방법',
+      usageStep1: '도구가 설치된 환경(보통 개발/테스트 화면)에서 서비스를 엽니다.',
+      usageStep2: 'Ctrl+Shift+D (mac ⌘+Shift+D) 로 편집 패널을 엽니다.',
+      usageStep3: '고치고 싶은 화면 속 글자를 클릭합니다.',
+      usageStep4: '패널에서 언어별 값(한/일/영...)을 수정하면 화면에 바로 반영됩니다.',
+      usageStep5: '구글 시트 기능이 켜져 있으면 수정값을 시트에 저장하거나 시트값을 불러옵니다.',
+
+      reflectHeading: '고친 내용이 "진짜로" 반영되기까지',
+      reflectStep1: '화면에서 클릭해 수정 → 내 화면에 즉시 미리보기 (나만 보임)',
+      reflectStep2: '구글 시트에 저장(선택) → 팀이 번역을 시트로 관리할 때의 전달 통로',
+      reflectStep3: '개발자가 코드(번역 파일)에 반영 + 배포 → 모든 사용자에게 진짜 반영',
+
+      conceptsHeading: '핵심 개념 3가지',
+      pickerTitle: '번역키 picker',
+      pickerBody:
+        '화면의 번역 문구를 클릭하면 그 문구의 모든 언어 값이 한 패널에 모여 한꺼번에 수정됩니다.',
+      overrideTitle: 'override (덮어쓰기 미리보기)',
+      overrideBody:
+        '고친 값은 내 브라우저에만 임시 저장되어 즉시 화면에 반영됩니다. 패널의 "override된 번역키 일괄 확인" 버튼에서 표로 모아 보고, 줄마다 "되돌리기"로 원본 복구할 수 있습니다.',
+      sheetsTitle: 'Google Sheets 동기화 (선택)',
+      sheetsBody:
+        '고친 값을 회사 구글 시트에 올리거나 시트값을 가져옵니다. 설정을 넣어줬을 때만 켜집니다.',
+
+      faqHeading: '자주 묻는 질문',
+      faqQ1: '내가 고치면 실제 서비스 글자가 바뀌나요?',
+      faqA1: '아니요. 내 브라우저에서만 보이는 미리보기입니다. 실제 반영은 코드에 들어가야 합니다.',
+      faqQ2: '잘못 고쳤어요. 원래 값으로 어떻게 되돌리나요?',
+      faqA2:
+        '패널의 "override된 번역키 일괄 확인" 모달에서 각 줄의 "되돌리기" 버튼을 누르면 그 키만 원본으로 복구됩니다.',
+      faqQ3: '어떤 화면에서 쓸 수 있나요?',
+      faqA3: '이 도구가 설치된 우리 서비스라면 어디서든. 특정 페이지에 묶여있지 않습니다.',
     },
   },
   ja: {
     translation: {
-      title: 'i18next-editor デモ',
-      subtitle: '画面の翻訳テキストをクリックして直接編集できます。',
-      greeting: 'こんにちは、{{name}}さん！',
-      cta: 'はじめる',
-      nested: {description: 'ネストされたキーもそのまま拾います。'},
+      title: 'i18next-editor 利用ガイド',
+      summaryHeading: '一行まとめ',
+      summaryBody:
+        'サービス画面に表示される文言を、画面上で直接クリックして編集し、すぐにプレビューできるツールです。',
+      usageHeading: '使い方',
+      conceptsHeading: '主要コンセプト3つ',
+      faqHeading: 'よくある質問',
+      // 残りのキーはわざと未翻訳（バッジ表示デモ）。
     },
   },
   en: {
     translation: {
-      title: 'i18next-editor demo',
-      subtitle: 'Click any translated text on screen to edit it inline.',
-      greeting: 'Hello, {{name}}!',
-      cta: 'Get started',
-      nested: {description: 'Nested keys are picked up too.'},
+      title: 'i18next-editor User Guide',
+
+      summaryHeading: 'In one line',
+      summaryBody:
+        'A tool that lets you click any translated text on screen, edit it, and preview the change instantly.',
+      summaryWarning:
+        '⚠️ Edits here are only a local preview. To truly ship them, the values must land in the code (translation files).',
+
+      usageHeading: 'How to use',
+      usageStep1: 'Open the service in an environment where the tool is installed (usually dev/test).',
+      usageStep2: 'Press Ctrl+Shift+D (mac ⌘+Shift+D) to open the editor panel.',
+      usageStep3: 'Click the on-screen text you want to edit.',
+      usageStep4: 'Edit the per-language values in the panel; the screen updates instantly.',
+      usageStep5: 'If Google Sheets sync is on, push edits to the sheet or pull values from it.',
+
+      reflectHeading: 'How an edit actually ships',
+      reflectStep1: 'Click & edit on screen → instant local preview (only you see it)',
+      reflectStep2: 'Save to Google Sheets (optional) → hand-off path when the team manages translations in a sheet',
+      reflectStep3: 'A developer commits it to the code (translation files) + deploys → shipped to all users',
+
+      conceptsHeading: 'Three core concepts',
+      pickerTitle: 'Translation-key picker',
+      pickerBody:
+        'Click a translated phrase and all of its language values gather in one panel to edit together.',
+      overrideTitle: 'override (preview)',
+      overrideBody:
+        'Edits are stored only in your browser and applied instantly. The "review all overrides" button shows them in a table where each row has a "revert" to restore the original.',
+      sheetsTitle: 'Google Sheets sync (optional)',
+      sheetsBody:
+        'Push edits to a company Google Sheet or pull values from it. Only enabled when configured.',
+
+      faqHeading: 'FAQ',
+      faqQ1: 'Does editing change the real service text?',
+      faqA1: 'No. It is a preview visible only in your browser. Real changes must land in the code.',
+      faqQ2: 'I made a mistake — how do I restore the original?',
+      faqA2:
+        'In the "review all overrides" modal, click the "revert" button on a row to restore that key to its original.',
+      faqQ3: 'Where can I use it?',
+      faqA3: 'On any of our services where the tool is installed. It is not tied to a specific page.',
     },
   },
 };
@@ -58,7 +129,6 @@ function App() {
   return (
     <main>
       <h1>{t('title')}</h1>
-      <p className="hint">{t('subtitle')}</p>
 
       <div className="row">
         <label htmlFor="lng">lang</label>
@@ -71,20 +141,62 @@ function App() {
         </select>
       </div>
 
+      <p className="hint">
+        <code>Ctrl/⌘ + Shift + D</code> 로 편집 패널을 토글하세요. picker 모드를 켜고 아래 텍스트를
+        클릭하면 그 키의 전 언어 값이 패널에 뜹니다.
+      </p>
+
       <div className="card">
-        <h2>{t('greeting', {name: 'Sora'})}</h2>
-        <p>{t('nested.description')}</p>
-        <p>{t('koOnly')}</p>
-        <button type="button" className="app">
-          {t('cta')}
-        </button>
+        <h2>{t('summaryHeading')}</h2>
+        <p>{t('summaryBody')}</p>
+        <p className="hint">{t('summaryWarning')}</p>
       </div>
 
-      <p className="hint" style={{marginTop: 32}}>
-        <code>Ctrl/⌘ + Shift + D</code> 로 편집 패널을 토글하세요. 패널 안에서 picker 모드를 켜고 위
-        텍스트를 클릭하면 그 키의 전 언어 값이 패널에 뜹니다. 값을 고치면 <code>localStorage</code>{' '}
-        override 로 즉시 화면에 반영됩니다.
-      </p>
+      <div className="card">
+        <h2>{t('usageHeading')}</h2>
+        <ol>
+          <li>{t('usageStep1')}</li>
+          <li>{t('usageStep2')}</li>
+          <li>{t('usageStep3')}</li>
+          <li>{t('usageStep4')}</li>
+          <li>{t('usageStep5')}</li>
+        </ol>
+      </div>
+
+      <div className="card">
+        <h2>{t('reflectHeading')}</h2>
+        <ol>
+          <li>{t('reflectStep1')}</li>
+          <li>{t('reflectStep2')}</li>
+          <li>{t('reflectStep3')}</li>
+        </ol>
+      </div>
+
+      <div className="card">
+        <h2>{t('conceptsHeading')}</h2>
+        <h3>{t('pickerTitle')}</h3>
+        <p>{t('pickerBody')}</p>
+        <h3>{t('overrideTitle')}</h3>
+        <p>{t('overrideBody')}</p>
+        <h3>{t('sheetsTitle')}</h3>
+        <p>{t('sheetsBody')}</p>
+      </div>
+
+      <div className="card">
+        <h2>{t('faqHeading')}</h2>
+        <p>
+          <strong>{t('faqQ1')}</strong>
+        </p>
+        <p>{t('faqA1')}</p>
+        <p>
+          <strong>{t('faqQ2')}</strong>
+        </p>
+        <p>{t('faqA2')}</p>
+        <p>
+          <strong>{t('faqQ3')}</strong>
+        </p>
+        <p>{t('faqA3')}</p>
+      </div>
     </main>
   );
 }

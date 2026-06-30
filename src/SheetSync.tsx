@@ -11,7 +11,7 @@ import {Button} from './components/ui/button';
 import {SectionLabel} from './components/ui/section-label';
 import {getEffectiveValue, type Overrides, setOverrideValue} from './overrides';
 import type {Language, SheetsConfig} from './types';
-import {type CellRef, computeUpsert, type Diff, getAccessToken, numCols, parseSheetRows, providedLangs, readData, writeData} from './sheets';
+import {computeUpsert, type Diff, getAccessToken, numCols, parseSheetRows, providedLangs, readData, sameDiffs, writeData} from './sheets';
 import SheetPushPreview from './SheetPushPreview';
 
 type Props = {
@@ -29,8 +29,6 @@ export default function SheetSync({i18n, languages, sheets, overrides, setOverri
   const [busy, setBusy] = useState(false);
   const [pending, setPending] = useState<{
     token: string;
-    values: string[][];
-    changedCells: CellRef[];
     diffs: Diff[];
     currentByKey: Record<string, Record<Language, string>>;
   } | null>(null);
@@ -71,12 +69,12 @@ export default function SheetSync({i18n, languages, sheets, overrides, setOverri
     try {
       const token = await getAccessToken(sheets.clientId);
       const existing = await readData(token, sheets.spreadsheetId, sheets.tab, numCols(sheets.keyCol, sheets.langCol));
-      const {values, diffs, changedCells, currentByKey} = computeUpsert(existing, overrides, languages, sheets.keyCol, sheets.langCol);
+      const {diffs, currentByKey} = computeUpsert(existing, overrides, languages, sheets.keyCol, sheets.langCol);
       if (diffs.length === 0) {
         setStatus('변경 사항이 없습니다 (시트와 동일).');
         return;
       }
-      setPending({token, values, changedCells, diffs, currentByKey});
+      setPending({token, diffs, currentByKey});
       setStatus('');
     } catch (e) {
       setStatus(`실패: ${(e as Error).message}`);
@@ -89,17 +87,27 @@ export default function SheetSync({i18n, languages, sheets, overrides, setOverri
   const confirmPush = useCallback(async () => {
     if (!pending) return;
     setBusy(true);
-    setStatus('시트에 반영 중...');
+    setStatus('변경 사항 재확인 중...');
     try {
-      await writeData(pending.token, sheets.spreadsheetId, sheets.tab, pending.values, pending.changedCells);
-      setStatus(`반영 완료: ${pending.diffs.length}건`);
+      // 낙관적 동시성: 미리보기 이후 누가 시트를 편집했는지 다시 읽어 확인한다.
+      // 시트 API엔 조건부 쓰기/락이 없으므로, 적용 직전 재계산한 diff가 미리보기와 같을 때만 쓴다.
+      const existing = await readData(pending.token, sheets.spreadsheetId, sheets.tab, numCols(sheets.keyCol, sheets.langCol));
+      const fresh = computeUpsert(existing, overrides, languages, sheets.keyCol, sheets.langCol);
+      if (!sameDiffs(pending.diffs, fresh.diffs)) {
+        setStatus('미리보기 이후 시트가 변경되어 적용을 중단했습니다. "시트에 적용하기"를 다시 눌러 확인하세요.');
+        setPending(null);
+        return;
+      }
+      setStatus('시트에 반영 중...');
+      await writeData(pending.token, sheets.spreadsheetId, sheets.tab, fresh.values, fresh.changedCells);
+      setStatus(`반영 완료: ${fresh.diffs.length}건`);
       setPending(null);
     } catch (e) {
       setStatus(`실패: ${(e as Error).message}`);
     } finally {
       setBusy(false);
     }
-  }, [pending, sheets]);
+  }, [pending, sheets, overrides, languages]);
 
   return (
     <div className="flex flex-col gap-2">

@@ -1,6 +1,6 @@
 import {describe, expect, it} from 'vitest';
 import type {Language} from './types';
-import {a1, computeUpsert, type Diff, groupDiffsByKey, numCols, parseSheetRows, providedLangs} from './sheets';
+import {a1, computeUpsert, type Diff, groupDiffsByKey, numCols, parseSheetRows, providedLangs, sameDiffs} from './sheets';
 
 // 기본 레이아웃 A:key(0) B:memo(1) C:ko(2) D:ja(3) E:en(4) → row = [key, memo, ko, ja, en]
 const LANGS: Language[] = ['ko', 'ja', 'en'];
@@ -120,5 +120,22 @@ describe('groupDiffsByKey', () => {
     const grouped = groupDiffsByKey(diffs);
     expect(grouped.map(([k]) => k)).toEqual(['b', 'a']);
     expect(grouped[0][1]).toEqual({ko: diffs[0], en: diffs[2]});
+  });
+});
+
+describe('sameDiffs', () => {
+  const base: Diff[] = [
+    {key: 'a', lang: 'ko', asIs: 'x', toBe: 'y', isNew: false},
+    {key: 'b', lang: 'en', asIs: '', toBe: 'z', isNew: true},
+  ];
+  it('순서가 달라도 같은 내용이면 true', () => {
+    expect(sameDiffs(base, [base[1], base[0]])).toBe(true);
+  });
+  it('asIs가 달라지면(그 사이 시트 편집) false', () => {
+    const changed: Diff[] = [{...base[0], asIs: '누가바꿈'}, base[1]];
+    expect(sameDiffs(base, changed)).toBe(false);
+  });
+  it('개수가 다르면 false', () => {
+    expect(sameDiffs(base, [base[0]])).toBe(false);
   });
 });

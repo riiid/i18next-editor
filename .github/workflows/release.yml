@@ -32,8 +32,6 @@ jobs:
         env:
           VERSION: ${{ inputs.version }}
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
           npm pkg set version="$VERSION"
           git commit -am "chore: release v$VERSION"
           git tag "v$VERSION"

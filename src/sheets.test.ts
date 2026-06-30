@@ -86,6 +86,19 @@ describe('computeUpsert', () => {
     expect(currentByKey.greeting).toEqual({ko: '안녕', ja: 'こ', en: 'hi'});
   });
 
+  it('key가 중복된 행은 모두 갱신한다(하나만 고쳐 stale 행이 남지 않게)', () => {
+    const existing = [
+      ['greeting', 'm', '안녕', 'こ', 'hi'],
+      ['other', 'm', 'x', 'y', 'z'],
+      ['greeting', 'm', '안녕', 'こ', 'hi'],
+    ];
+    const {values, diffs, changedCells} = computeUpsert(existing, {ko: {greeting: '반가워'}}, LANGS, KEY_COL, LANG_COL);
+    expect(values[0][2]).toBe('반가워');
+    expect(values[2][2]).toBe('반가워'); // 중복 행도 갱신
+    expect(changedCells).toEqual([{r: 0, c: 2}, {r: 2, c: 2}]);
+    expect(diffs).toEqual([{key: 'greeting', lang: 'ko', asIs: '안녕', toBe: '반가워', isNew: false}]); // diff는 1건
+  });
+
   it('A열·memo·다른 언어·행 순서를 보존한다', () => {
     const existing = [
       ['a', 'memoA', 'ko-a', 'ja-a', 'en-a'],

@@ -49,7 +49,12 @@ export function loadOverrides(): Overrides {
 
 export function saveOverrides(overrides: Overrides): void {
   if (typeof window === 'undefined') return;
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(overrides));
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(overrides));
+  } catch {
+    // 용량 초과/프라이빗 모드 등으로 저장 불가. 호출부가 사용자에게 알릴 수 있게 명확한 메시지로 던진다.
+    throw new Error('override 저장 실패: 브라우저 저장공간이 가득 찼거나 사용할 수 없습니다.');
+  }
 }
 
 export function clearOverrides(): void {

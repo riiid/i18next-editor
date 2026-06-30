@@ -58,7 +58,11 @@ function loadGis(): Promise<void> {
     s.async = true;
     s.defer = true;
     s.onload = () => resolve();
-    s.onerror = () => reject(new Error('Google Identity Services 로드 실패'));
+    s.onerror = () => {
+      // 실패한 promise를 캐시에 남기면 이후 모든 호출이 같은 거부를 반환해 재시도가 불가능하다.
+      gisPromise = null;
+      reject(new Error('Google Identity Services 로드 실패'));
+    };
     document.head.appendChild(s);
   });
   return gisPromise;
@@ -126,12 +130,17 @@ export async function writeData(
     return {range: sheetRange(tab, `${a1cell}:${a1cell}`), values: [[cell === '' ? null : cell]]};
   });
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(spreadsheetId)}/values:batchUpdate`;
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: {Authorization: `Bearer ${token}`, 'Content-Type': 'application/json'},
-    body: JSON.stringify({valueInputOption: 'RAW', data}),
-  });
-  if (!res.ok) throw new Error(`시트 쓰기 실패 (${res.status}): ${await res.text()}`);
+  // 셀 1개당 range 1개라 대량 push는 단일 요청 한도에 걸릴 수 있어 청크로 나눠 보낸다.
+  // ponytail: 순차 전송. 처리량이 문제되면 병렬화.
+  const CHUNK = 1000;
+  for (let i = 0; i < data.length; i += CHUNK) {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {Authorization: `Bearer ${token}`, 'Content-Type': 'application/json'},
+      body: JSON.stringify({valueInputOption: 'RAW', data: data.slice(i, i + CHUNK)}),
+    });
+    if (!res.ok) throw new Error(`시트 쓰기 실패 (${res.status}): ${await res.text()}`);
+  }
 }
 
 // 시트 셀은 개행을 리터럴 escape("\n" 두 글자)로 보관한다(앱 문자열 관례). override/i18next는
@@ -184,10 +193,13 @@ export function computeUpsert(
   // 변경 전 스냅샷(아래 루프에서 values를 덮어쓰므로 기존값 보존용).
   const originalValues: string[][] = values.map(r => [...r]);
 
-  const rowByKey: Record<string, number> = {};
+  // key가 중복된 행이 있으면 모두 갱신한다(하나만 고치면 나머지가 stale로 남아 앱이 옛 값을 읽음).
+  const rowsByKey: Record<string, number[]> = {};
   for (let i = 0; i < values.length; i++) {
     const k = values[i][keyCol];
-    if (k) rowByKey[k] = i;
+    if (!k) continue;
+    if (!rowsByKey[k]) rowsByKey[k] = [];
+    rowsByKey[k].push(i);
   }
 
   const diffs: Diff[] = [];
@@ -197,20 +209,25 @@ export function computeUpsert(
     const colIdx = langCol[lang];
     const flat = flatten(overrides[lang]);
     for (const [key, toBe] of Object.entries(flat)) {
-      if (key in rowByKey) {
-        const idx = rowByKey[key];
-        const asIs = values[idx][colIdx] ?? '';
-        if (asIs !== toBe) {
-          values[idx][colIdx] = toBe;
-          changedCells.push({r: idx, c: colIdx});
-          diffs.push({key, lang, asIs, toBe, isNew: false});
+      const rows = rowsByKey[key];
+      if (rows) {
+        // diff/미리보기는 첫 행 기준(asIs), 쓰기는 값이 다른 모든 중복 행에 반영.
+        const asIs = values[rows[0]][colIdx] ?? '';
+        let changed = false;
+        for (const idx of rows) {
+          if ((values[idx][colIdx] ?? '') !== toBe) {
+            values[idx][colIdx] = toBe;
+            changedCells.push({r: idx, c: colIdx});
+            changed = true;
+          }
         }
+        if (changed) diffs.push({key, lang, asIs, toBe, isNew: false});
       } else {
         const idx = values.length;
         const newRow = new Array<string>(cols).fill('');
         newRow[keyCol] = key;
         newRow[colIdx] = toBe;
-        rowByKey[key] = idx;
+        rowsByKey[key] = [idx];
         // 새 행은 key 셀과 값 셀만 쓴다(나머지 빈 셀은 건드리지 않음).
         changedCells.push({r: idx, c: keyCol}, {r: idx, c: colIdx});
         values.push(newRow);
@@ -223,7 +240,7 @@ export function computeUpsert(
   const currentByKey: Record<string, Record<Language, string>> = {};
   for (const {key} of diffs) {
     if (key in currentByKey) continue;
-    const idx = rowByKey[key];
+    const idx = rowsByKey[key][0];
     const rec = {} as Record<Language, string>;
     for (const lng of languages) {
       rec[lng] = originalValues[idx]?.[langCol[lng]] ?? '';

@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest';
-import {getLanguage} from './types';
+import {getLanguage, matchKey} from './types';
 
 const LANGS = ['ko', 'ja', 'en'];
 
@@ -18,5 +18,30 @@ describe('getLanguage', () => {
 
   it('첫 매칭을 우선한다(목록 순서)', () => {
     expect(getLanguage('en-GB', ['en', 'en-GB'], 'ko')).toBe('en');
+  });
+});
+
+describe('matchKey', () => {
+  const ev = (init: KeyboardEventInit) => new KeyboardEvent('keydown', init);
+
+  it('Mod는 Ctrl 또는 Meta 중 하나라도 눌리면 매칭', () => {
+    expect(matchKey(ev({ctrlKey: true}), 'Mod')).toBe(true);
+    expect(matchKey(ev({metaKey: true}), 'Mod')).toBe(true);
+    expect(matchKey(ev({}), 'Mod')).toBe(false);
+  });
+
+  it('Ctrl/Meta/Shift/Alt는 각 modifier만 본다', () => {
+    expect(matchKey(ev({ctrlKey: true}), 'Ctrl')).toBe(true);
+    expect(matchKey(ev({metaKey: true}), 'Ctrl')).toBe(false);
+    expect(matchKey(ev({metaKey: true}), 'Meta')).toBe(true);
+    expect(matchKey(ev({shiftKey: true}), 'Shift')).toBe(true);
+    expect(matchKey(ev({altKey: true}), 'Alt')).toBe(true);
+  });
+
+  it('일반 키는 대소문자 무시하고 e.key와 비교한다', () => {
+    expect(matchKey(ev({key: 'K'}), 'k')).toBe(true);
+    expect(matchKey(ev({key: 'k'}), 'K')).toBe(true);
+    expect(matchKey(ev({key: 'Escape'}), 'escape')).toBe(true);
+    expect(matchKey(ev({key: 'a'}), 'b')).toBe(false);
   });
 });

@@ -1,6 +1,6 @@
 import {describe, expect, it} from 'vitest';
 import type {Language} from './types';
-import {a1, computeUpsert, type Diff, groupDiffsByKey, parseSheetRows, providedLangs} from './sheets';
+import {a1, computeUpsert, type Diff, groupDiffsByKey, numCols, parseSheetRows, providedLangs} from './sheets';
 
 // 기본 레이아웃 A:key(0) B:memo(1) C:ko(2) D:ja(3) E:en(4) → row = [key, memo, ko, ja, en]
 const LANGS: Language[] = ['ko', 'ja', 'en'];
@@ -18,6 +18,16 @@ describe('providedLangs', () => {
   it('실제 값이 있는 언어만 반환(빈 객체·누락 언어 제외)', () => {
     const overrides = {ko: {a: '1'}, ja: {}, en: undefined};
     expect(providedLangs(overrides, LANGS)).toEqual(['ko']);
+  });
+});
+
+describe('numCols', () => {
+  it('keyCol과 langCol 인덱스 중 최대 + 1을 행 길이로 본다', () => {
+    expect(numCols(KEY_COL, LANG_COL)).toBe(5); // max(0,2,3,4)+1
+  });
+
+  it('keyCol이 가장 큰 경우도 반영한다', () => {
+    expect(numCols(9, {ko: 2, ja: 3, en: 4})).toBe(10);
   });
 });
 

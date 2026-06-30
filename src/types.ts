@@ -54,8 +54,9 @@ export type SheetsConfig = {
 
 /**
  * i18next가 감지한 언어 문자열(예: 'ko-KR')을 지원 언어 코드로 정규화한다.
+ * prefix가 겹칠 때(예: 'en'·'en-GB') 더 구체적인(긴) 코드를 우선 매칭한다.
  * 매칭이 없으면 fallback을 반환한다.
  */
 export function getLanguage(raw: string, languages: Language[], fallback: Language): Language {
-  return languages.find(language => raw.startsWith(language)) ?? fallback;
+  return [...languages].sort((a, b) => b.length - a.length).find(language => raw.startsWith(language)) ?? fallback;
 }

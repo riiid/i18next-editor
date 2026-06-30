@@ -30,6 +30,22 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      - name: 버전 유효성 검사
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          CURRENT=$(node -p "require('./package.json').version")
+          IFS=. read -r MA MI PA <<< "$CURRENT"
+          ALLOWED="$((MA+1)).0.0 ${MA}.$((MI+1)).0 ${MA}.${MI}.$((PA+1))"
+          for v in $ALLOWED; do
+            if [ "$VERSION" = "$v" ]; then
+              echo "OK: $CURRENT -> $VERSION"
+              exit 0
+            fi
+          done
+          echo "::error::유효하지 않은 버전 '$VERSION'. 현재 버전 $CURRENT 기준 허용값: $ALLOWED"
+          exit 1
+
       - name: 버전 bump & 커밋 & 푸시 & 태그
         env:
           VERSION: ${{ inputs.version }}

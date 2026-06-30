@@ -32,6 +32,7 @@ type GoogleOAuth = {
         client_id: string;
         scope: string;
         callback: (resp: TokenResponse) => void;
+        error_callback?: (err: {type?: string; message?: string}) => void;
       }) => TokenClient;
     };
   };
@@ -76,6 +77,8 @@ export async function getAccessToken(clientId: string): Promise<string> {
         if (resp.access_token) resolve(resp.access_token);
         else reject(new Error(resp.error_description || resp.error || 'OAuth 토큰 획득 실패'));
       },
+      // 사용자가 동의하지 않고 팝업을 닫으면 callback이 불리지 않으므로 여기서 reject해 버튼 로딩을 푼다.
+      error_callback: err => reject(new Error(err.type === 'popup_closed' ? '인증 창이 닫혔습니다' : err.message || 'OAuth 실패')),
     });
     client.requestAccessToken();
   });

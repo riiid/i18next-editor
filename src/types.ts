@@ -9,6 +9,32 @@ export type Language = string;
 /** 'translation' 네임스페이스 하나만 다룬다(i18next 기본 NS). */
 export const NS = 'translation';
 
+/**
+ * 단축키 한 키. 수정자 + 일반 키를 섞어 배열로 조합한다(모두 AND).
+ * - 'Mod': Ctrl(win/linux) 또는 Cmd(mac) — 크로스 플랫폼 수정자
+ * - 'Ctrl' | 'Meta' | 'Shift' | 'Alt': 해당 수정자 그대로
+ * - 그 외 문자열: KeyboardEvent.key 와 대소문자 무시 비교(예: 'D', 'Enter', '/')
+ */
+export type KeyCode = 'Mod' | 'Ctrl' | 'Meta' | 'Shift' | 'Alt' | (string & {});
+
+/** 단축키 한 키가 이 keydown 이벤트와 맞는지. */
+export function matchKey(e: KeyboardEvent, code: KeyCode): boolean {
+  switch (code) {
+    case 'Mod':
+      return e.ctrlKey || e.metaKey;
+    case 'Ctrl':
+      return e.ctrlKey;
+    case 'Meta':
+      return e.metaKey;
+    case 'Shift':
+      return e.shiftKey;
+    case 'Alt':
+      return e.altKey;
+    default:
+      return e.key.toLowerCase() === code.toLowerCase();
+  }
+}
+
 /** 시트 동기화 설정. 호스트가 주입할 때만 시트 UI가 켜진다. */
 export type SheetsConfig = {
   /** Google OAuth Client ID (spreadsheets 스코프). */

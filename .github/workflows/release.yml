@@ -7,6 +7,9 @@ on:
         description: "릴리즈 버전 (예: 0.1.0)"
         required: true
 
+env:
+  GH_TOKEN: ${{ secrets.MACHINE_USER_TOKEN }}
+
 permissions:
   contents: write
 
@@ -42,7 +45,7 @@ jobs:
 
       - name: GitHub Release 생성 (tarball 첨부)
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ env.GH_TOKEN }}
         run: |
           gh release create "v${{ inputs.version }}" \
             ./*.tgz \

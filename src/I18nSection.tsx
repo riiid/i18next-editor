@@ -33,6 +33,7 @@ import {NUL} from './chars';
 import SheetSync from './SheetSync';
 import OverrideReview from './OverrideReview';
 import {Toaster, useToasts} from './Toast';
+import {useConfirm} from './ConfirmDialog';
 
 const ATTR = 'data-i18n-key';
 
@@ -92,6 +93,7 @@ export default function I18nSection({i18n, languages: languagesProp, fallbackLng
   const [draft, setDraft] = useState<Record<Language, string>>({});
   const [hover, setHover] = useState<Rect | null>(null);
   const {toasts, push: setStatus, dismiss} = useToasts();
+  const {confirm, dialog: confirmDialog} = useConfirm();
   const [reviewing, setReviewing] = useState(false);
   const inspectingRef = useRef(inspecting);
   inspectingRef.current = inspecting;
@@ -278,11 +280,13 @@ export default function I18nSection({i18n, languages: languagesProp, fallbackLng
     }
   }, [selectedKey, draft, overrides, languages, i18n, setStatus]);
 
-  const resetAll = useCallback(() => {
+  const resetAll = useCallback(async () => {
+    if (!(await confirm('저장된 override를 모두 초기화할까요? 아직 시트에 반영하지 않은 변경은 사라져요.', {destructive: true})))
+      return;
     resetToBase(i18n);
     setOverrides({});
     setStatus('override 초기화됨');
-  }, [i18n]);
+  }, [i18n, confirm, setStatus]);
 
   // 한 키의 override를 모든 언어에서 해제(base값으로 되돌리면 setOverrideValue가 삭제 처리).
   const revertKey = useCallback(
@@ -466,6 +470,8 @@ export default function I18nSection({i18n, languages: languagesProp, fallbackLng
             overrides={overrides}
             setOverrides={setOverrides}
             onAfterPull={() => setSelectedKey(null)}
+            onStatus={setStatus}
+            confirm={confirm}
           />
         </>
       )}
@@ -481,6 +487,7 @@ export default function I18nSection({i18n, languages: languagesProp, fallbackLng
         저장된 override값 초기화
       </Button>
       <Toaster toasts={toasts} dismiss={dismiss} />
+      {confirmDialog}
 
       {reviewing &&
         (() => {

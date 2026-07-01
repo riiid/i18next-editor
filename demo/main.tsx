@@ -11,54 +11,72 @@ const resources = {
     translation: {
       title: 'i18next-editor 사용설명서',
 
-      summaryHeading: '한 줄 요약',
-      summaryBody:
-        '우리 서비스 화면에 보이는 글자(번역 문구)를, 화면에서 직접 클릭해 고치고 바로 미리볼 수 있게 해주는 도구입니다.',
-      summaryWarning:
-        '⚠️ 여기서 고친 값은 내 화면 미리보기일 뿐입니다. 진짜로 서비스에 반영되려면 그 내용이 코드(번역 파일)에 들어가야 합니다.',
+      summary: {
+        heading: '한 줄 요약',
+        body: '우리 서비스 화면에 보이는 글자(번역 문구)를, 화면에서 직접 클릭해 고치고 바로 미리볼 수 있게 해주는 도구입니다.',
+        warning:
+          '⚠️ 여기서 고친 값은 내 화면 미리보기일 뿐입니다. 진짜로 서비스에 반영되려면 그 내용이 코드(번역 파일)에 들어가야 합니다.',
+      },
 
-      usageHeading: '사용 방법',
-      usageStep1: '도구가 설치된 환경(보통 개발/테스트 화면)에서 서비스를 엽니다.',
-      usageStep2: 'Ctrl+Shift+D (mac ⌘+Shift+D) 로 편집 패널을 엽니다.',
-      usageStep3: '고치고 싶은 화면 속 글자를 클릭합니다.',
-      usageStep4: '패널에서 언어별 값(한/일/영...)을 수정하면 화면에 바로 반영됩니다.',
-      usageStep5: '구글 시트 기능이 켜져 있으면 수정값을 시트에 저장하거나 시트값을 불러옵니다.',
+      usage: {
+        heading: '사용 방법',
+        step1: '도구가 설치된 환경(보통 개발/테스트 화면)에서 서비스를 엽니다.',
+        step2: 'Ctrl+Shift+D (mac ⌘+Shift+D) 로 편집 패널을 엽니다.',
+        step3: '고치고 싶은 화면 속 글자를 클릭합니다.',
+        step4: '패널에서 언어별 값(한/일/영...)을 수정하면 화면에 바로 반영됩니다.',
+        step5: '구글 시트 기능이 켜져 있으면 수정값을 시트에 저장하거나 시트값을 불러옵니다.',
+      },
 
-      reflectHeading: '고친 내용이 "진짜로" 반영되기까지',
-      reflectStep1: '화면에서 클릭해 수정 → 내 화면에 즉시 미리보기 (나만 보임)',
-      reflectStep2: '구글 시트에 저장(선택) → 팀이 번역을 시트로 관리할 때의 전달 통로',
-      reflectStep3: '개발자가 코드(번역 파일)에 반영 + 배포 → 모든 사용자에게 진짜 반영',
+      reflect: {
+        heading: '고친 내용이 "진짜로" 반영되기까지',
+        step1: '화면에서 클릭해 수정 → 내 화면에 즉시 미리보기 (나만 보임)',
+        step2: '구글 시트에 저장(선택) → 팀이 번역을 시트로 관리할 때의 전달 통로',
+        step3: '개발자가 코드(번역 파일)에 반영 + 배포 → 모든 사용자에게 진짜 반영',
+      },
 
-      conceptsHeading: '핵심 개념 3가지',
-      pickerTitle: '번역키 picker',
-      pickerBody:
-        '화면의 번역 문구를 클릭하면 그 문구의 모든 언어 값이 한 패널에 모여 한꺼번에 수정됩니다.',
-      overrideTitle: 'override (덮어쓰기 미리보기)',
-      overrideBody:
-        '고친 값은 내 브라우저에만 임시 저장되어 즉시 화면에 반영됩니다. 패널의 "override된 번역키 일괄 확인" 버튼에서 표로 모아 보고, 줄마다 "되돌리기"로 원본 복구할 수 있습니다.',
-      sheetsTitle: 'Google Sheets 동기화 (선택)',
-      sheetsBody:
-        '고친 값을 회사 구글 시트에 올리거나 시트값을 가져옵니다. 설정을 넣어줬을 때만 켜집니다.',
+      concepts: {
+        heading: '핵심 개념 3가지',
+        picker: {
+          title: '번역키 picker',
+          body: '화면의 번역 문구를 클릭하면 그 문구의 모든 언어 값이 한 패널에 모여 한꺼번에 수정됩니다.',
+        },
+        override: {
+          title: 'override (덮어쓰기 미리보기)',
+          body: '고친 값은 내 브라우저에만 임시 저장되어 즉시 화면에 반영됩니다. 패널의 "override된 번역키 일괄 확인" 버튼에서 표로 모아 보고, 줄마다 "되돌리기"로 원본 복구할 수 있습니다.',
+        },
+        sheets: {
+          title: 'Google Sheets 동기화 (선택)',
+          body: '고친 값을 회사 구글 시트에 올리거나 시트값을 가져옵니다. 설정을 넣어줬을 때만 켜집니다.',
+        },
+      },
 
-      faqHeading: '자주 묻는 질문',
-      faqQ1: '내가 고치면 실제 서비스 글자가 바뀌나요?',
-      faqA1: '아니요. 내 브라우저에서만 보이는 미리보기입니다. 실제 반영은 코드에 들어가야 합니다.',
-      faqQ2: '잘못 고쳤어요. 원래 값으로 어떻게 되돌리나요?',
-      faqA2:
-        '패널의 "override된 번역키 일괄 확인" 모달에서 각 줄의 "되돌리기" 버튼을 누르면 그 키만 원본으로 복구됩니다.',
-      faqQ3: '어떤 화면에서 쓸 수 있나요?',
-      faqA3: '이 도구가 설치된 우리 서비스라면 어디서든. 특정 페이지에 묶여있지 않습니다.',
+      faq: {
+        heading: '자주 묻는 질문',
+        q1: '내가 고치면 실제 서비스 글자가 바뀌나요?',
+        a1: '아니요. 내 브라우저에서만 보이는 미리보기입니다. 실제 반영은 코드에 들어가야 합니다.',
+        q2: '잘못 고쳤어요. 원래 값으로 어떻게 되돌리나요?',
+        a2: '패널의 "override된 번역키 일괄 확인" 모달에서 각 줄의 "되돌리기" 버튼을 누르면 그 키만 원본으로 복구됩니다.',
+        q3: '어떤 화면에서 쓸 수 있나요?',
+        a3: '이 도구가 설치된 우리 서비스라면 어디서든. 특정 페이지에 묶여있지 않습니다.',
+      },
     },
   },
   ja: {
     translation: {
       title: 'i18next-editor 利用ガイド',
-      summaryHeading: '一行まとめ',
-      summaryBody:
-        'サービス画面に表示される文言を、画面上で直接クリックして編集し、すぐにプレビューできるツールです。',
-      usageHeading: '使い方',
-      conceptsHeading: '主要コンセプト3つ',
-      faqHeading: 'よくある質問',
+      summary: {
+        heading: '一行まとめ',
+        body: 'サービス画面に表示される文言を、画面上で直接クリックして編集し、すぐにプレビューできるツールです。',
+      },
+      usage: {
+        heading: '使い方',
+      },
+      concepts: {
+        heading: '主要コンセプト3つ',
+      },
+      faq: {
+        heading: 'よくある質問',
+      },
       // 残りのキーはわざと未翻訳（バッジ表示デモ）。
     },
   },
@@ -66,43 +84,54 @@ const resources = {
     translation: {
       title: 'i18next-editor User Guide',
 
-      summaryHeading: 'In one line',
-      summaryBody:
-        'A tool that lets you click any translated text on screen, edit it, and preview the change instantly.',
-      summaryWarning:
-        '⚠️ Edits here are only a local preview. To truly ship them, the values must land in the code (translation files).',
+      summary: {
+        heading: 'In one line',
+        body: 'A tool that lets you click any translated text on screen, edit it, and preview the change instantly.',
+        warning:
+          '⚠️ Edits here are only a local preview. To truly ship them, the values must land in the code (translation files).',
+      },
 
-      usageHeading: 'How to use',
-      usageStep1: 'Open the service in an environment where the tool is installed (usually dev/test).',
-      usageStep2: 'Press Ctrl+Shift+D (mac ⌘+Shift+D) to open the editor panel.',
-      usageStep3: 'Click the on-screen text you want to edit.',
-      usageStep4: 'Edit the per-language values in the panel; the screen updates instantly.',
-      usageStep5: 'If Google Sheets sync is on, push edits to the sheet or pull values from it.',
+      usage: {
+        heading: 'How to use',
+        step1: 'Open the service in an environment where the tool is installed (usually dev/test).',
+        step2: 'Press Ctrl+Shift+D (mac ⌘+Shift+D) to open the editor panel.',
+        step3: 'Click the on-screen text you want to edit.',
+        step4: 'Edit the per-language values in the panel; the screen updates instantly.',
+        step5: 'If Google Sheets sync is on, push edits to the sheet or pull values from it.',
+      },
 
-      reflectHeading: 'How an edit actually ships',
-      reflectStep1: 'Click & edit on screen → instant local preview (only you see it)',
-      reflectStep2: 'Save to Google Sheets (optional) → hand-off path when the team manages translations in a sheet',
-      reflectStep3: 'A developer commits it to the code (translation files) + deploys → shipped to all users',
+      reflect: {
+        heading: 'How an edit actually ships',
+        step1: 'Click & edit on screen → instant local preview (only you see it)',
+        step2: 'Save to Google Sheets (optional) → hand-off path when the team manages translations in a sheet',
+        step3: 'A developer commits it to the code (translation files) + deploys → shipped to all users',
+      },
 
-      conceptsHeading: 'Three core concepts',
-      pickerTitle: 'Translation-key picker',
-      pickerBody:
-        'Click a translated phrase and all of its language values gather in one panel to edit together.',
-      overrideTitle: 'override (preview)',
-      overrideBody:
-        'Edits are stored only in your browser and applied instantly. The "review all overrides" button shows them in a table where each row has a "revert" to restore the original.',
-      sheetsTitle: 'Google Sheets sync (optional)',
-      sheetsBody:
-        'Push edits to a company Google Sheet or pull values from it. Only enabled when configured.',
+      concepts: {
+        heading: 'Three core concepts',
+        picker: {
+          title: 'Translation-key picker',
+          body: 'Click a translated phrase and all of its language values gather in one panel to edit together.',
+        },
+        override: {
+          title: 'override (preview)',
+          body: 'Edits are stored only in your browser and applied instantly. The "review all overrides" button shows them in a table where each row has a "revert" to restore the original.',
+        },
+        sheets: {
+          title: 'Google Sheets sync (optional)',
+          body: 'Push edits to a company Google Sheet or pull values from it. Only enabled when configured.',
+        },
+      },
 
-      faqHeading: 'FAQ',
-      faqQ1: 'Does editing change the real service text?',
-      faqA1: 'No. It is a preview visible only in your browser. Real changes must land in the code.',
-      faqQ2: 'I made a mistake — how do I restore the original?',
-      faqA2:
-        'In the "review all overrides" modal, click the "revert" button on a row to restore that key to its original.',
-      faqQ3: 'Where can I use it?',
-      faqA3: 'On any of our services where the tool is installed. It is not tied to a specific page.',
+      faq: {
+        heading: 'FAQ',
+        q1: 'Does editing change the real service text?',
+        a1: 'No. It is a preview visible only in your browser. Real changes must land in the code.',
+        q2: 'I made a mistake — how do I restore the original?',
+        a2: 'In the "review all overrides" modal, click the "revert" button on a row to restore that key to its original.',
+        q3: 'Where can I use it?',
+        a3: 'On any of our services where the tool is installed. It is not tied to a specific page.',
+      },
     },
   },
 };
@@ -147,55 +176,55 @@ function App() {
       </p>
 
       <div className="card">
-        <h2>{t('summaryHeading')}</h2>
-        <p>{t('summaryBody')}</p>
-        <p className="hint">{t('summaryWarning')}</p>
+        <h2>{t('summary.heading')}</h2>
+        <p>{t('summary.body')}</p>
+        <p className="hint">{t('summary.warning')}</p>
       </div>
 
       <div className="card">
-        <h2>{t('usageHeading')}</h2>
+        <h2>{t('usage.heading')}</h2>
         <ol>
-          <li>{t('usageStep1')}</li>
-          <li>{t('usageStep2')}</li>
-          <li>{t('usageStep3')}</li>
-          <li>{t('usageStep4')}</li>
-          <li>{t('usageStep5')}</li>
+          <li>{t('usage.step1')}</li>
+          <li>{t('usage.step2')}</li>
+          <li>{t('usage.step3')}</li>
+          <li>{t('usage.step4')}</li>
+          <li>{t('usage.step5')}</li>
         </ol>
       </div>
 
       <div className="card">
-        <h2>{t('reflectHeading')}</h2>
+        <h2>{t('reflect.heading')}</h2>
         <ol>
-          <li>{t('reflectStep1')}</li>
-          <li>{t('reflectStep2')}</li>
-          <li>{t('reflectStep3')}</li>
+          <li>{t('reflect.step1')}</li>
+          <li>{t('reflect.step2')}</li>
+          <li>{t('reflect.step3')}</li>
         </ol>
       </div>
 
       <div className="card">
-        <h2>{t('conceptsHeading')}</h2>
-        <h3>{t('pickerTitle')}</h3>
-        <p>{t('pickerBody')}</p>
-        <h3>{t('overrideTitle')}</h3>
-        <p>{t('overrideBody')}</p>
-        <h3>{t('sheetsTitle')}</h3>
-        <p>{t('sheetsBody')}</p>
+        <h2>{t('concepts.heading')}</h2>
+        <h3>{t('concepts.picker.title')}</h3>
+        <p>{t('concepts.picker.body')}</p>
+        <h3>{t('concepts.override.title')}</h3>
+        <p>{t('concepts.override.body')}</p>
+        <h3>{t('concepts.sheets.title')}</h3>
+        <p>{t('concepts.sheets.body')}</p>
       </div>
 
       <div className="card">
-        <h2>{t('faqHeading')}</h2>
+        <h2>{t('faq.heading')}</h2>
         <p>
-          <strong>{t('faqQ1')}</strong>
+          <strong>{t('faq.q1')}</strong>
         </p>
-        <p>{t('faqA1')}</p>
+        <p>{t('faq.a1')}</p>
         <p>
-          <strong>{t('faqQ2')}</strong>
+          <strong>{t('faq.q2')}</strong>
         </p>
-        <p>{t('faqA2')}</p>
+        <p>{t('faq.a2')}</p>
         <p>
-          <strong>{t('faqQ3')}</strong>
+          <strong>{t('faq.q3')}</strong>
         </p>
-        <p>{t('faqA3')}</p>
+        <p>{t('faq.a3')}</p>
       </div>
     </main>
   );

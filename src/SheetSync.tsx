@@ -9,7 +9,7 @@ import type {i18n as I18n} from 'i18next';
 import {Download, ExternalLink, FileSpreadsheet, Upload} from 'lucide-react';
 import {Button} from './components/ui/button';
 import {SectionLabel} from './components/ui/section-label';
-import {getEffectiveValue, type Overrides, setOverrideValue} from './overrides';
+import {getEffectiveValue, keyExistsInBase, type Overrides, setOverrideValue} from './overrides';
 import type {Language, SheetsConfig} from './types';
 import {computeUpsert, type Diff, getAccessToken, numCols, parseSheetRows, providedLangs, readData, sameDiffs, writeData} from './sheets';
 import SheetPushPreview from './SheetPushPreview';
@@ -79,6 +79,7 @@ export default function SheetSync({i18n, languages, sheets, overrides, setOverri
       let acc = overrides;
       let count = 0;
       for (const {key, lang, value} of parseSheetRows(rows, languages, sheets.keyCol, sheets.langCol)) {
+        if (!keyExistsInBase(languages, key)) continue; // base에 없는 키는 무시
         if (value === getEffectiveValue(acc, lang, key)) continue;
         acc = setOverrideValue(i18n, acc, lang, key, value);
         count += 1;

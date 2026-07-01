@@ -1,6 +1,6 @@
 import type {Meta, StoryObj} from '@storybook/react-vite';
 import i18next from 'i18next';
-import SheetSync from './SheetSync';
+import SheetSync, {PermissionNotice} from './SheetSync';
 
 const i18n = i18next.createInstance();
 void i18n.init({
@@ -41,4 +41,13 @@ export const Default: Story = {
     overrides: {ko: {greeting: '수정된 인사말'}},
     setOverrides: () => {},
   },
+};
+
+// 쓰기 권한 없음(403) 시 뜨는 인라인 안내 + "번역 시트 열기" 버튼.
+export const PermissionDenied: StoryObj<typeof PermissionNotice> = {
+  render: () => (
+    <div className="w-72">
+      <PermissionNotice sheetUrl="https://docs.google.com/spreadsheets/d/1AbCdefGhIjkLmnOpQrStUvWxYz/edit" />
+    </div>
+  ),
 };

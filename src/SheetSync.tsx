@@ -6,7 +6,7 @@
  */
 import {useCallback, useMemo, useState} from 'react';
 import type {i18n as I18n} from 'i18next';
-import {Download, FileSpreadsheet, Upload} from 'lucide-react';
+import {Download, ExternalLink, FileSpreadsheet, Upload} from 'lucide-react';
 import {Button} from './components/ui/button';
 import {SectionLabel} from './components/ui/section-label';
 import {getEffectiveValue, type Overrides, setOverrideValue} from './overrides';
@@ -28,9 +28,39 @@ type Props = {
   confirm?: (message: string, opts?: {destructive?: boolean}) => Promise<boolean>;
 };
 
+// 403 = 시트에 쓰기 권한이 없는 계정으로 인증됨. 토스트 대신 인라인으로 안내 + 시트 열기 버튼을 보여준다.
+function isPermissionError(e: Error): boolean {
+  return e.message.includes('(403)');
+}
+
+/** 쓰기 권한(403) 없을 때의 인라인 안내 + 시트 열기 버튼. */
+export function PermissionNotice({sheetUrl}: {sheetUrl: string}) {
+  return (
+    <div className="flex flex-col gap-2 rounded-md border border-destructive/50 bg-destructive/10 p-2.5 text-destructive">
+      <p className="m-0 font-medium">번역 시트에 쓰기 권한이 없어요.</p>
+      <p className="m-0 leading-relaxed">
+        지금 인증한 구글 계정에 이 시트의 편집 권한이 없습니다. 시트 소유자에게 편집 권한을 요청한 뒤 다시 시도하세요.
+      </p>
+      <a href={sheetUrl} target="_blank" rel="noreferrer" className="self-start">
+        <Button variant="outline" size="sm">
+          <ExternalLink size={14} />
+          번역 시트 열기
+        </Button>
+      </a>
+    </div>
+  );
+}
+
 export default function SheetSync({i18n, languages, sheets, overrides, setOverrides, onAfterPull, onStatus, confirm}: Props) {
   const [busy, setBusy] = useState(false);
+  const [permError, setPermError] = useState(false);
   const setStatus = useMemo(() => onStatus ?? (() => {}), [onStatus]);
+  const sheetUrl = `https://docs.google.com/spreadsheets/d/${encodeURIComponent(sheets.spreadsheetId)}/edit`;
+  // 403이면 권한 안내로, 그 외엔 토스트로.
+  const report = useCallback(
+    (e: Error) => (isPermissionError(e) ? setPermError(true) : setStatus(`실패: ${e.message}`)),
+    [setStatus]
+  );
   const ask = useMemo(() => confirm ?? ((msg: string) => Promise.resolve(window.confirm(msg))), [confirm]);
   const [pending, setPending] = useState<{
     token: string;
@@ -42,6 +72,7 @@ export default function SheetSync({i18n, languages, sheets, overrides, setOverri
   const pullFromSheet = useCallback(async () => {
     if (!(await ask('시트의 번역값을 가져와 현재 override에 덮어씁니다. 진행할까요?'))) return;
     setBusy(true);
+    setPermError(false);
     try {
       const token = await getAccessToken(sheets.clientId);
       const rows = await readData(token, sheets.spreadsheetId, sheets.tab, numCols(sheets.keyCol, sheets.langCol));
@@ -56,7 +87,7 @@ export default function SheetSync({i18n, languages, sheets, overrides, setOverri
       onAfterPull?.();
       setStatus(`시트에서 가져옴: ${count}건 반영`);
     } catch (e) {
-      setStatus(`실패: ${(e as Error).message}`);
+      report(e as Error);
     } finally {
       setBusy(false);
     }
@@ -69,6 +100,7 @@ export default function SheetSync({i18n, languages, sheets, overrides, setOverri
       return;
     }
     setBusy(true);
+    setPermError(false);
     try {
       const token = await getAccessToken(sheets.clientId);
       const existing = await readData(token, sheets.spreadsheetId, sheets.tab, numCols(sheets.keyCol, sheets.langCol));
@@ -79,7 +111,7 @@ export default function SheetSync({i18n, languages, sheets, overrides, setOverri
       }
       setPending({token, diffs, currentByKey});
     } catch (e) {
-      setStatus(`실패: ${(e as Error).message}`);
+      report(e as Error);
     } finally {
       setBusy(false);
     }
@@ -89,6 +121,7 @@ export default function SheetSync({i18n, languages, sheets, overrides, setOverri
   const confirmPush = useCallback(async () => {
     if (!pending) return;
     setBusy(true);
+    setPermError(false);
     try {
       // 낙관적 동시성: 미리보기 이후 누가 시트를 편집했는지 다시 읽어 확인한다.
       // 시트 API엔 조건부 쓰기/락이 없으므로, 적용 직전 재계산한 diff가 미리보기와 같을 때만 쓴다.
@@ -104,7 +137,7 @@ export default function SheetSync({i18n, languages, sheets, overrides, setOverri
       setStatus(`반영 완료: ${fresh.diffs.length}건`);
       setPending(null);
     } catch (e) {
-      setStatus(`실패: ${(e as Error).message}`);
+      report(e as Error);
     } finally {
       setBusy(false);
     }
@@ -127,6 +160,8 @@ export default function SheetSync({i18n, languages, sheets, overrides, setOverri
           {busy ? '처리 중...' : '시트에서 가져오기'}
         </Button>
       </div>
+
+      {permError && <PermissionNotice sheetUrl={sheetUrl} />}
 
       {/* as-is → to-be 미리보기 confirm 모달 */}
       {pending && (

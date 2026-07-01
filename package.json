@@ -1,6 +1,6 @@
 {
   "name": "i18next-editor",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "packageManager": "pnpm@11.6.0",
   "description": "In-app i18next translation editor devtool: 번역키 picker + localStorage override + 선택적 Google Sheets 동기화.",
   "license": "MIT",

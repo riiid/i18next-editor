@@ -47,7 +47,7 @@ export default function ConfirmDialog({message, destructive, onConfirm, onCancel
       <div className="flex w-[min(380px,92vw)] flex-col overflow-hidden rounded-lg bg-card text-card-foreground shadow-2xl">
         <div className="flex items-start gap-2 px-4 py-4 text-sm leading-relaxed">
           {destructive && <TriangleAlert size={16} className="mt-0.5 shrink-0 text-destructive" />}
-          <span className="break-words">{message}</span>
+          <span className="whitespace-pre-line break-words">{message}</span>
         </div>
         <div className="flex gap-2 border-t border-border px-4 py-3">
           <Button variant={destructive ? 'destructive' : 'default'} onClick={onConfirm}>

@@ -23,7 +23,7 @@ function colLetter(idx: number): string {
   return s;
 }
 
-type TokenResponse = {access_token?: string; error?: string; error_description?: string};
+type TokenResponse = {access_token?: string; expires_in?: number; error?: string; error_description?: string};
 type TokenClient = {requestAccessToken: (overrides?: {prompt?: string}) => void};
 type GoogleOAuth = {
   accounts: {
@@ -68,8 +68,13 @@ function loadGis(): Promise<void> {
   return gisPromise;
 }
 
-/** OAuth 동의 팝업을 띄워 spreadsheets 스코프 access token을 얻는다. */
+// 발급받은 토큰을 메모리에 캐시해 매번 동의 팝업이 뜨지 않게 한다(탭 유지 중에만, 새로고침하면 사라짐).
+let cachedToken: {value: string; expiresAt: number} | null = null;
+
+/** OAuth 동의 팝업을 띄워 spreadsheets 스코프 access token을 얻는다(유효한 캐시가 있으면 재사용). */
 export async function getAccessToken(clientId: string): Promise<string> {
+  // 만료 60초 전까진 캐시 재사용. 클럭 스큐/네트워크 지연 여유.
+  if (cachedToken && cachedToken.expiresAt - 60_000 > Date.now()) return cachedToken.value;
   await loadGis();
   const oauth2 = window.google?.accounts?.oauth2;
   if (!oauth2) throw new Error('Google Identity Services 사용 불가');
@@ -78,13 +83,16 @@ export async function getAccessToken(clientId: string): Promise<string> {
       client_id: clientId,
       scope: SHEETS_SCOPE,
       callback: resp => {
-        if (resp.access_token) resolve(resp.access_token);
-        else reject(new Error(resp.error_description || resp.error || 'OAuth 토큰 획득 실패'));
+        if (resp.access_token) {
+          cachedToken = {value: resp.access_token, expiresAt: Date.now() + (resp.expires_in ?? 3600) * 1000};
+          resolve(resp.access_token);
+        } else reject(new Error(resp.error_description || resp.error || 'OAuth 토큰 획득 실패'));
       },
       // 사용자가 동의하지 않고 팝업을 닫으면 callback이 불리지 않으므로 여기서 reject해 버튼 로딩을 푼다.
       error_callback: err => reject(new Error(err.type === 'popup_closed' ? '인증 창이 닫혔습니다' : err.message || 'OAuth 실패')),
     });
-    client.requestAccessToken();
+    // prompt:'' → 이미 동의한 사용자는 동의 화면을 건너뛰고 조용히 토큰 재발급(세션 유효 시).
+    client.requestAccessToken({prompt: ''});
   });
 }
 

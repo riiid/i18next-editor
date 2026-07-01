@@ -52,8 +52,8 @@ export default function DiffTable({diffs, currentByKey, languages, rowAction}: P
               if (d) {
                 return (
                   <td key={lng} className="border-b border-border px-2 py-1.5 align-top [word-break:break-word]">
-                    <div className="text-destructive line-through">{d.asIs || '—'}</div>
-                    <div className="font-semibold text-emerald-600">{d.toBe}</div>
+                    <div className="whitespace-pre-line text-destructive line-through">{d.asIs || '—'}</div>
+                    <div className="whitespace-pre-line font-semibold text-emerald-600">{d.toBe}</div>
                   </td>
                 );
               }
@@ -61,7 +61,7 @@ export default function DiffTable({diffs, currentByKey, languages, rowAction}: P
               const current = currentByKey[key]?.[lng] ?? '';
               return (
                 <td key={lng} className="border-b border-border px-2 py-1.5 align-top [word-break:break-word]">
-                  <div className="text-muted-foreground">{current || '(값 없음)'}</div>
+                  <div className="whitespace-pre-line text-muted-foreground">{current || '(값 없음)'}</div>
                 </td>
               );
             })}

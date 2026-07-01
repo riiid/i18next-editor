@@ -103,6 +103,11 @@ export function getBaseValue(lng: Language, key: string): string | undefined {
   return typeof value === 'string' ? value : undefined;
 }
 
+/** key가 base에 존재하는지(어느 언어든 값이 있으면 존재). 시트 pull 시 base에 없는 키를 거를 때 쓴다. */
+export function keyExistsInBase(languages: Language[], key: string): boolean {
+  return languages.some((lng) => getBaseValue(lng, key) !== undefined);
+}
+
 /**
  * 현재 적용되는 값(= override가 있으면 override, 없으면 base, 둘 다 없으면 '')을 읽는다.
  * 패널 입력값(draft)을 채울 때 i18n 내부 상태(getResource) 대신 이 순수 함수를 쓴다.

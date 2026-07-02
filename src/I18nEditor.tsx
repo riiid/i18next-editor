@@ -32,7 +32,14 @@ function loadPos(): {top: number; left: number} | null {
     const raw = window.localStorage.getItem(POS_KEY);
     if (!raw) return null;
     const p = JSON.parse(raw) as {top: number; left: number};
-    return typeof p?.top === 'number' && typeof p?.left === 'number' ? p : null;
+    if (typeof p?.top !== 'number' || typeof p?.left !== 'number') return null;
+    // 화면 밖 위치면 저장값을 버리고 기본 위치로 리셋(창 크기 변경/모니터 분리 대응).
+    const onScreen = p.top >= 0 && p.left >= 0 && p.top <= window.innerHeight - 24 && p.left <= window.innerWidth - 40;
+    if (!onScreen) {
+      window.localStorage.removeItem(POS_KEY);
+      return null;
+    }
+    return p;
   } catch {
     return null;
   }
